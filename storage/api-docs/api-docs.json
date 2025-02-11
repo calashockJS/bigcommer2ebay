@@ -1,0 +1,638 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "BigCommerce to eBay Product & Order Sync",
+        "description": "BigCommerce to eBay Product and Order Sync by Rest API Integration with Laravel",
+        "contact": {
+            "email": "support@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/bigcommerce/products": {
+            "get": {
+                "tags": [
+                    "Products Migrate"
+                ],
+                "summary": "Retrieve products",
+                "description": "Fetch products from BigCommerce API",
+                "operationId": "8466b38b3cc6ac619e29793da42b6b0a",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of products to retrieve",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Pagination offset",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "price": {
+                                                "type": "number"
+                                            },
+                                            "availability": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/product": {
+            "get": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "Create a product on eBay",
+                "description": "Create eBay Product",
+                "operationId": "a709a7f790a81d4baefe621512d10aee",
+                "responses": {
+                    "201": {
+                        "description": "Product successfully created on eBay",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "responses": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "sku": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "integer"
+                                                    },
+                                                    "response": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - eBay Access Token not found"
+                    },
+                    "404": {
+                        "description": "No products found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/token": {
+            "post": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "Generate eBay Access Token",
+                "description": "Generate eBay Access Token",
+                "operationId": "293d229dcd61392f23a44f8cf3a1e904",
+                "responses": {
+                    "200": {
+                        "description": "Access token generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer"
+                                        },
+                                        "token_type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/get-inventory-items": {
+            "get": {
+                "tags": [
+                    "eBay Inventory"
+                ],
+                "summary": "Retrieve all inventory item",
+                "description": "Fetch all Ebay Inventory Items",
+                "operationId": "ae89cc107ee9b7902b0e0ff0f559a267",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of inventory item to retrieve",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Pagination offset",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "price": {
+                                                "type": "number"
+                                            },
+                                            "availability": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/inventory-item/{sku}": {
+            "get": {
+                "tags": [
+                    "eBay Inventory"
+                ],
+                "summary": "Get Inventory Item",
+                "description": "Fetches an inventory item from eBay by SKU",
+                "operationId": "ce654cca8ac528cb7b605d1306b11e57",
+                "parameters": [
+                    {
+                        "name": "sku",
+                        "in": "path",
+                        "description": "SKU of the inventory item",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "sku": {
+                                            "type": "string",
+                                            "example": "WHEELS1"
+                                        },
+                                        "locale": {
+                                            "type": "string",
+                                            "example": "en_US"
+                                        },
+                                        "product": {
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Car Wheels"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "4 Big wheels for a kart."
+                                                },
+                                                "brand": {
+                                                    "type": "string",
+                                                    "example": "Luigi"
+                                                },
+                                                "imageUrls": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "https://cdn11.bigcommerce.com/s-u4thb/images/stencil/80w/products/757/30/Mario_mario_kart_8_deluxe__08113.1738858327.png"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "condition": {
+                                            "type": "string",
+                                            "example": "NEW"
+                                        },
+                                        "availability": {
+                                            "properties": {
+                                                "shipToLocationAvailability": {
+                                                    "properties": {
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Item not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Inventory item not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ebay/create-offer": {
+            "post": {
+                "tags": [
+                    "eBay Offers"
+                ],
+                "summary": "Create an eBay Offer",
+                "description": "Dynamically fetches required data from eBay and creates an offer",
+                "operationId": "444da71b9a6820129120162b0dac47d1",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "price",
+                                    "quantity",
+                                    "sku"
+                                ],
+                                "properties": {
+                                    "sku": {
+                                        "type": "string",
+                                        "example": "123456789"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 49.99
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "marketplaceId": {
+                                        "type": "string",
+                                        "example": "EBAY_US"
+                                    },
+                                    "listingDescription": {
+                                        "type": "string",
+                                        "example": "4 Big wheels for a kart."
+                                    },
+                                    "fulfillmentPolicyId": {
+                                        "type": "string",
+                                        "example": "123456789"
+                                    },
+                                    "paymentPolicyId": {
+                                        "type": "string",
+                                        "example": "987654321"
+                                    },
+                                    "returnPolicyId": {
+                                        "type": "string",
+                                        "example": "1122334455"
+                                    },
+                                    "categoryId": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    },
+                                    "merchantLocationKey": {
+                                        "type": "string",
+                                        "example": "warehouse_1"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Offer created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "offerId": {
+                                            "type": "string",
+                                            "example": "1234567890"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "SUCCESS"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to create offer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ebay/get-category-tree-id/{marketplace_id}": {
+            "get": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "Get eBay Category Tree ID",
+                "description": "Fetches the default category tree ID for a given marketplace",
+                "operationId": "430167f10a6ef0f102f4232eb3d09fbb",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    },
+                    {
+                        "name": "marketplace_id",
+                        "in": "path",
+                        "description": "Marketplace ID (e.g., EBAY_US)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "categoryTreeId": {
+                                            "type": "string",
+                                            "example": "0"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid request data"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ebay/get-category-list/{category_tree_id}": {
+            "get": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "Get eBay Category List",
+                "description": "Fetches the eBay category list for a given category tree ID",
+                "operationId": "8fcfc58520aba99390be4277d7d4eabc",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    },
+                    {
+                        "name": "category_tree_id",
+                        "in": "path",
+                        "description": "Category Tree ID (retrieved using get-category-tree-id API)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "categoryId": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    },
+                                                    "categoryName": {
+                                                        "type": "string",
+                                                        "example": "Electronics"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid request data"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Products Migrate",
+            "description": "Products Migrate"
+        },
+        {
+            "name": "eBay",
+            "description": "eBay"
+        },
+        {
+            "name": "eBay Inventory",
+            "description": "eBay Inventory"
+        },
+        {
+            "name": "eBay Offers",
+            "description": "eBay Offers"
+        }
+    ]
+}
