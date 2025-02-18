@@ -56,15 +56,11 @@ Route::get('/ebay/get-category-list/{category_tree_id}', [ApiController::class, 
 Route::get('/ebay/getShippingPackageCode', [ApiController::class, 'getShippingPackageCode']);
 Route::get('/ebay/get-category-id-by-name/{categoryName}', [ApiController::class, 'getCategoryIdFromEbay']);
 
-
-
 Route::post('/ebay/fulfillment-policy', [EbayPolicyController::class, 'createFulfillmentPolicy']);
 Route::post('/ebay/payment-policy', [EbayPolicyController::class, 'createPaymentPolicy']);
 Route::post('/ebay/return-policy', [EbayPolicyController::class, 'createReturnPolicy']);
 
-
-
 Route::get('/ebay/auth', [EbayAuthController::class, 'redirectToEbay']); // Redirect user
 Route::get('/ebay/callback', [EbayAuthController::class, 'handleEbayCallback']); // Handle callback
 Route::get('/ebay/token', [EbayAuthController::class, 'getUserAccessToken']); // Get access token
-
+Route::get('/ebay/cli-token', [EbayAuthController::class, 'getAppAccessToken']);

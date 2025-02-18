@@ -13,14 +13,25 @@ class EbayAuthController extends Controller
     private $clientId;
     private $clientSecret;
     private $redirectUri;
-    private $tokenFile = 'ebay_sandbox_user_token.txt';
+    private $tokenFile = '';
     private $scopes = 'https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory';
+    private $ebayEnvType;
 
     public function __construct()
     {
         $this->clientId = env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = env('EBAY_SANDBOX_REDIRECT_URI');
+
+        // Get environment type value from .env
+        $envTypeEbay = env('EBAY_ENV_TYPE');
+        $this->ebayEnvType = $envTypeEbay;
+        
+        if ($envTypeEbay == '.sandbox.') {
+            $this->tokenFile = 'ebay_sandbox_user_token.txt';
+        }else{
+            $this->tokenFile = 'ebay_user_token.txt';
+        }
     }
 
     /**
@@ -31,7 +42,7 @@ class EbayAuthController extends Controller
         $state = bin2hex(random_bytes(16)); // CSRF protection
         session(['ebay_oauth_state' => $state]);
 
-        $authUrl = "https://auth.sandbox.ebay.com/oauth2/authorize?client_id={$this->clientId}"
+        $authUrl = "https://auth".$$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}"
             . "&redirect_uri=" . urlencode($this->redirectUri)
             . "&response_type=code"
             . "&scope=" . urlencode($this->scopes)
@@ -84,7 +95,7 @@ class EbayAuthController extends Controller
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api.sandbox.ebay.com/identity/v1/oauth2/token', [
+        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
             'grant_type'   => 'authorization_code',
             'code'         => $code,
             'redirect_uri' => $this->redirectUri,
@@ -105,7 +116,8 @@ class EbayAuthController extends Controller
     /**
      * Get a valid eBay Sandbox user access token.
      */
-    public function getUserAccessToken()
+    //public function getUserAccessToken()
+    public function getAppAccessToken()
     {
         $storedToken = $this->readStoredToken();
 
@@ -113,16 +125,48 @@ class EbayAuthController extends Controller
             return response()->json(['access_token' => $storedToken['access_token']]);
         }
 
-        if ($storedToken && isset($storedToken['refresh_token'])) {
+        /*if ($storedToken && isset($storedToken['refresh_token'])) {
             $newToken = $this->refreshUserToken($storedToken['refresh_token']);
 
             if ($newToken) {
                 $this->storeToken($newToken);
                 return response()->json(['access_token' => $newToken['access_token']]);
             }
+        }*/
+        // Token expired or not found, get a new one
+        $newToken = $this->fetchNewAppToken();
+
+        if ($newToken) {
+            $this->storeToken($newToken);
+            return response()->json(['access_token' => $newToken['access_token']]);
         }
 
         return response()->json(['error' => 'No valid token. Please authorize again.'], 401);
+    }
+
+    /**
+     * Fetch a new application access token (client credentials).
+     */
+    private function fetchNewAppToken()
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
+            'Content-Type'  => 'application/x-www-form-urlencoded'
+        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
+            'grant_type' => 'client_credentials',
+            'scope'      => $this->scopes
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+
+            return [
+                'access_token' => $data['access_token'],
+                'expires_at'   => time() + $data['expires_in']
+            ];
+        }
+
+        return null;
     }
 
     /**
@@ -133,7 +177,7 @@ class EbayAuthController extends Controller
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api.sandbox.ebay.com/identity/v1/oauth2/token', [
+        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
             'grant_type'    => 'refresh_token',
             'refresh_token' => $refreshToken,
             'scope'         => $this->scopes
