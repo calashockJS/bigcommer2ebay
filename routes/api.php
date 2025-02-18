@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\api\ApiController;
+use App\Http\Controllers\api\EbayPolicyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 /*
@@ -42,9 +43,20 @@ Route::delete('/bigcommerce/products/{id}', [ApiController::class, 'deleteProduc
 
 Route::get('/ebay/inventory-item/{sku}', [ApiController::class, 'getInventoryItem']);
 Route::get('/ebay/create-inventory', [ApiController::class, 'createEbayProduct']);
+Route::post('/ebay/bc-sku-to-ebay-listing', [ApiController::class, 'createEbayProductWithBCSku']);
 Route::get('/ebay/get-inventory-items', [ApiController::class, 'getAllEbayInventoryItems']);
-Route::post('/ebay/create-offer', [ApiController::class, 'createOffer']);
+Route::post('/ebay/create-offer/{sku}', [ApiController::class, 'createOffer']);
+Route::post('/ebay/publish-offer/{offerId}', [ApiController::class, 'publishEbayOffer']);
 
 Route::get('/ebay/generate-access-token', [ApiController::class, 'generateEbayAccessToken']);
 Route::get('/ebay/get-category-tree-id/{marketplace_id}', [ApiController::class, 'getCategoryTreeId']);
 Route::get('/ebay/get-category-list/{category_tree_id}', [ApiController::class, 'getCategoryList']);
+Route::get('/ebay/getShippingPackageCode', [ApiController::class, 'getShippingPackageCode']);
+Route::get('/ebay/get-category-id-by-name/{categoryName}', [ApiController::class, 'getCategoryIdFromEbay']);
+
+
+
+Route::post('/ebay/fulfillment-policy', [EbayPolicyController::class, 'createFulfillmentPolicy']);
+Route::post('/ebay/payment-policy', [EbayPolicyController::class, 'createPaymentPolicy']);
+Route::post('/ebay/return-policy', [EbayPolicyController::class, 'createReturnPolicy']);
+
