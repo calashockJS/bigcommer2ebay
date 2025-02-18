@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\api\ApiController;
 use App\Http\Controllers\api\EbayPolicyController;
+use App\Http\Controllers\api\EbayProductController;
+use App\Http\Controllers\api\EbayAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 /*
@@ -59,4 +61,10 @@ Route::get('/ebay/get-category-id-by-name/{categoryName}', [ApiController::class
 Route::post('/ebay/fulfillment-policy', [EbayPolicyController::class, 'createFulfillmentPolicy']);
 Route::post('/ebay/payment-policy', [EbayPolicyController::class, 'createPaymentPolicy']);
 Route::post('/ebay/return-policy', [EbayPolicyController::class, 'createReturnPolicy']);
+
+
+
+Route::get('/ebay/auth', [EbayAuthController::class, 'redirectToEbay']); // Redirect user
+Route::get('/ebay/callback', [EbayAuthController::class, 'handleEbayCallback']); // Handle callback
+Route::get('/ebay/token', [EbayAuthController::class, 'getUserAccessToken']); // Get access token
 
