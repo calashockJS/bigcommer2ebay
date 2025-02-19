@@ -4,22 +4,34 @@
     "builds": [
         {
             "src": "api/index.php",
-            "use":  "vercel-php",
+            "use": "vercel-php",
             "config": {
                 "composerVersion": "2",
-                "installCommand": "apt-get update && apt-get install -y libssl-dev"
+                "installCommand": "apt-get update && apt-get install -y libssl-dev",
+                "includeFiles": [
+                    "vendor/**",
+                    "bootstrap/**",
+                    "config/**",
+                    "app/**",
+                    "public/**",
+                    "routes/**",
+                    "resources/**",
+                    "database/**",
+                    ".env.example",
+                    "artisan"
+                ]
             }
         },
         {
-          "src": "public/**",
-          "use": "@vercel/static"
+            "src": "public/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
             "src": "/(css|js|images|fonts|favicon.ico|robots.txt)/(.*)",
             "dest": "public/$1/$2"
-          },
+        },
         {
             "src": "/(.*)",
             "dest": "/api/index.php"
