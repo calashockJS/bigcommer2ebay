@@ -1,7 +1,10 @@
 <?php
 
-// Load custom bootstrap to handle Vercel's read-only filesystem
-$app = require __DIR__ . '/bootstrap.php';
+// Include Composer autoloader
+require __DIR__ . '/../vendor/autoload.php';
+
+// Bootstrap the application
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
