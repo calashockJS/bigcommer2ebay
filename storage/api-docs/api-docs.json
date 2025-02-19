@@ -1,12 +1,9 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "BigCommerce to eBay Product & Order Sync",
-        "description": "BigCommerce to eBay Product and Order Sync by Rest API Integration with Laravel",
-        "contact": {
-            "email": "support@example.com"
-        },
-        "version": "1.0.0"
+        "title": "Big Commerce - middleware - eBay",
+        "description": "API for Middleware from BigCommerce to Ebay Listing.",
+        "version": "1.0"
     },
     "paths": {
         "/api/bigcommerce/products": {
@@ -76,14 +73,111 @@
                 }
             }
         },
-        "/api/ebay/product": {
+        "/api/ebay/bc-sku-to-ebay-listing": {
+            "post": {
+                "tags": [
+                    "BC to eBay Listing"
+                ],
+                "summary": "Create a inventory item, then create a offer and publishh that on eBay",
+                "description": "Create eBay Product",
+                "operationId": "498681cc4708b7f1889bc30bdc374328",
+                "parameters": [
+                    {
+                        "name": "WEBHOOK-SECURITY-KEY",
+                        "in": "header",
+                        "description": "Security key for authentication",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": "dasc23c3-ca45v8v9-90asds"
+                        }
+                    },
+                    {
+                        "name": "bcsku",
+                        "in": "header",
+                        "description": "Big Commerce SKU for Ebay Listing",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    },
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Product successfully created on eBay",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "responses": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "sku": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "integer"
+                                                    },
+                                                    "response": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - eBay Access Token not found"
+                    },
+                    "404": {
+                        "description": "No products found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/create-inventory": {
             "get": {
                 "tags": [
-                    "eBay"
+                    "eBay Inventory"
                 ],
                 "summary": "Create a product on eBay",
                 "description": "Create eBay Product",
-                "operationId": "a709a7f790a81d4baefe621512d10aee",
+                "operationId": "4290fbc91ebe85c6a7bfc867cb17d13b",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Product successfully created on eBay",
@@ -356,15 +450,24 @@
                 }
             }
         },
-        "/api/ebay/create-offer": {
+        "/api/ebay/create-offer/{sku}": {
             "post": {
                 "tags": [
                     "eBay Offers"
                 ],
                 "summary": "Create an eBay Offer",
                 "description": "Dynamically fetches required data from eBay and creates an offer",
-                "operationId": "444da71b9a6820129120162b0dac47d1",
+                "operationId": "71ecaeadab020b1b7b17a5d8f23de2bd",
                 "parameters": [
+                    {
+                        "name": "sku",
+                        "in": "path",
+                        "description": "SKU",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     {
                         "name": "accessToken",
                         "in": "query",
@@ -376,64 +479,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "price",
-                                    "quantity",
-                                    "sku"
-                                ],
-                                "properties": {
-                                    "sku": {
-                                        "type": "string",
-                                        "example": "123456789"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 49.99
-                                    },
-                                    "quantity": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "marketplaceId": {
-                                        "type": "string",
-                                        "example": "EBAY_US"
-                                    },
-                                    "listingDescription": {
-                                        "type": "string",
-                                        "example": "4 Big wheels for a kart."
-                                    },
-                                    "fulfillmentPolicyId": {
-                                        "type": "string",
-                                        "example": "123456789"
-                                    },
-                                    "paymentPolicyId": {
-                                        "type": "string",
-                                        "example": "987654321"
-                                    },
-                                    "returnPolicyId": {
-                                        "type": "string",
-                                        "example": "1122334455"
-                                    },
-                                    "categoryId": {
-                                        "type": "string",
-                                        "example": "1234"
-                                    },
-                                    "merchantLocationKey": {
-                                        "type": "string",
-                                        "example": "warehouse_1"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "Offer created successfully",
@@ -615,6 +660,387 @@
                     }
                 }
             }
+        },
+        "/api/ebay/publish-offer/{offerId}": {
+            "post": {
+                "tags": [
+                    "eBay Offers"
+                ],
+                "summary": "Create an eBay Offer",
+                "description": "Dynamically fetches required data from eBay and creates an offer",
+                "operationId": "e528e908306c56e63c4b302270ee8367",
+                "parameters": [
+                    {
+                        "name": "offerId",
+                        "in": "path",
+                        "description": "Offer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Offer pulished successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "offerId": {
+                                            "type": "string",
+                                            "example": "1234567890"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "SUCCESS"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to create offer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ebay/getShippingPackageCode": {
+            "get": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "get ebay Shipping Package Code",
+                "description": "get ebay Shipping Package Code",
+                "operationId": "e06337e5bacf56850a9efc862510ef3d",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "get ebay Shipping Package Code",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "responses": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "sku": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "integer"
+                                                    },
+                                                    "response": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - eBay Access Token not found"
+                    },
+                    "404": {
+                        "description": "No Shipping Package found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ebay/get-category-id-by-name/{categoryName}": {
+            "get": {
+                "tags": [
+                    "eBay"
+                ],
+                "summary": "Get eBay Category Id by category name",
+                "description": "Fetches the eBay category id for a given category name",
+                "operationId": "58894a9abe2447ebfca4ebf1888e4cc2",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    },
+                    {
+                        "name": "categoryName",
+                        "in": "path",
+                        "description": "Category Name (retrieved using bigcommerce product categoroy API)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "categoryId": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid request data"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ebay/fulfillment-policy": {
+            "post": {
+                "tags": [
+                    "eBay Policies"
+                ],
+                "summary": "Create eBay Fulfillment Policy",
+                "operationId": "e3c44c086e7b5949fc0063a0df677438",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "handlingTime"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Standard Fulfillment"
+                                    },
+                                    "handlingTime": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "400": {
+                        "description": "Invalid Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/ebay/payment-policy": {
+            "post": {
+                "tags": [
+                    "eBay Policies"
+                ],
+                "summary": "Create eBay Payment Policy",
+                "operationId": "c30ebff68fc89b3f690adf08d89ca637",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "paymentMethods"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Credit Card Payments"
+                                    },
+                                    "paymentMethods": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "CREDIT_CARD",
+                                            "PAYPAL"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "400": {
+                        "description": "Invalid Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/ebay/return-policy": {
+            "post": {
+                "tags": [
+                    "eBay Policies"
+                ],
+                "summary": "Create eBay Return Policy",
+                "operationId": "81a74a974adc036be1da7c9da25629fb",
+                "parameters": [
+                    {
+                        "name": "accessToken",
+                        "in": "query",
+                        "description": "User Token denerated at eBay Developer site.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": ""
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "returnsAccepted"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Standard Return Policy"
+                                    },
+                                    "returnsAccepted": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "400": {
+                        "description": "Invalid Request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
         }
     },
     "tags": [
@@ -623,16 +1049,24 @@
             "description": "Products Migrate"
         },
         {
-            "name": "eBay",
-            "description": "eBay"
+            "name": "BC to eBay Listing",
+            "description": "BC to eBay Listing"
         },
         {
             "name": "eBay Inventory",
             "description": "eBay Inventory"
         },
         {
+            "name": "eBay",
+            "description": "eBay"
+        },
+        {
             "name": "eBay Offers",
             "description": "eBay Offers"
+        },
+        {
+            "name": "eBay Policies",
+            "description": "eBay Policies"
         }
     ]
 }

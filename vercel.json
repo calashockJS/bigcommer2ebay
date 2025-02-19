@@ -1,8 +1,20 @@
 {
     "version": 2,
     "framework": null,
+    "builds": [
+        {
+            "src": "build.sh",
+            "use": "@vercel/static-build"
+        },
+        {
+            "src": "api/*.php",
+            "use": "vercel-php@0.6.0"
+        }
+    ],
     "functions": {
-        "api/index.php": { "runtime": "vercel-php@0.6.0" }
+        "api/index.php": {
+            "runtime": "vercel-php@0.6.0"
+        }
     },
     "routes": [
         {
@@ -21,7 +33,6 @@
         "APP_ROUTES_CACHE": "/tmp/routes.php",
         "APP_SERVICES_CACHE": "/tmp/services.php",
         "VIEW_COMPILED_PATH": "/tmp",
-
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie"
