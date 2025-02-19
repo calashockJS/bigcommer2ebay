@@ -13,7 +13,7 @@
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "true",
-        "APP_URL": "https://your.url.from.vercel.app",
+        "APP_URL": "https://middleware-calashock-bc-vv-ebay.vercel.app ",
         "APP_KEY": "base64:qiylSosPMh9nyel8o8nlIeEBeLxVR7NINgJW1c0B0fU=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
