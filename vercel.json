@@ -9,9 +9,17 @@
                 "composerVersion": "2",
                 "installCommand": "apt-get update && apt-get install -y libssl-dev"
             }
+        },
+        {
+          "src": "public/**",
+          "use": "@vercel/static"
         }
     ],
     "routes": [
+        {
+            "src": "/(css|js|images|fonts|favicon.ico|robots.txt)/(.*)",
+            "dest": "public/$1/$2"
+          },
         {
             "src": "/(.*)",
             "dest": "/api/index.php"
