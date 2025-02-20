@@ -42,7 +42,7 @@ class EbayAuthController extends Controller
         $state = bin2hex(random_bytes(16)); // CSRF protection
         session(['ebay_oauth_state' => $state]);
 
-        $authUrl = "https://auth".$$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}"
+        $authUrl = "https://auth".$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}"
             . "&redirect_uri=" . urlencode($this->redirectUri)
             . "&response_type=code"
             . "&scope=" . urlencode($this->scopes)
@@ -95,7 +95,7 @@ class EbayAuthController extends Controller
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
+        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
             'grant_type'   => 'authorization_code',
             'code'         => $code,
             'redirect_uri' => $this->redirectUri,
@@ -152,7 +152,7 @@ class EbayAuthController extends Controller
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
+        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
             'grant_type' => 'client_credentials',
             'scope'      => $this->scopes
         ]);
@@ -177,7 +177,7 @@ class EbayAuthController extends Controller
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api'.$$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
+        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
             'grant_type'    => 'refresh_token',
             'refresh_token' => $refreshToken,
             'scope'         => $this->scopes
