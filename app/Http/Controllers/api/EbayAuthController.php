@@ -147,7 +147,7 @@ class EbayAuthController extends Controller
     /**
      * Fetch a new application access token (client credentials).
      */
-    private function fetchNewAppToken()
+    public function fetchNewAppToken()
     {
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
