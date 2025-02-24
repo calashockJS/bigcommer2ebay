@@ -157,6 +157,8 @@ class EbayAuthController extends Controller
             'scope'      => $this->scopes
         ]);
 
+        Log::info('fetchNewAppToken ::',[$response->json()]);
+
         if ($response->successful()) {
             $data = $response->json();
 
