@@ -39,6 +39,7 @@ class ApiController extends Controller
             }*/
             echo 'KKK';
             $ebayAccessToken = $this->fetchEbayAccessToken();
+            echo '$ebayAccessToken ::'.$ebayAccessToken;die;
         }
 
         if (!$ebayAccessToken) {
