@@ -37,6 +37,7 @@ class ApiController extends Controller
             } else {
                 $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
             }*/
+            echo 'KKK';
             $ebayAccessToken = $this->fetchEbayAccessToken();
         }
 
@@ -177,7 +178,7 @@ class ApiController extends Controller
      */
     public function getProducts()
     {
-        echo $this->accessToken;die;
+        //echo $this->accessToken;die;
         $url = $this->baseUrl . '/catalog/products';
 
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -1429,7 +1430,7 @@ class ApiController extends Controller
         try {
             $baseUrl = env('BASE_URL'); // Ensure BASE_URL is set in .env
             $apiEndpoint = $baseUrl . '/api/ebay/cli-token';
-
+            echo '$apiEndpoint ::'.$apiEndpoint;
             Log::info('$apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
