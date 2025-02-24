@@ -177,6 +177,7 @@ class ApiController extends Controller
      */
     public function getProducts()
     {
+        echo $this->accessToken;die;
         $url = $this->baseUrl . '/catalog/products';
 
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -1428,6 +1429,8 @@ class ApiController extends Controller
         try {
             $baseUrl = env('BASE_URL'); // Ensure BASE_URL is set in .env
             $apiEndpoint = $baseUrl . '/api/ebay/cli-token';
+
+            Log::info('$apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
 

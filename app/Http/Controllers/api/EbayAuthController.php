@@ -141,7 +141,15 @@ class EbayAuthController extends Controller
             return response()->json(['access_token' => $newToken['access_token']]);
         }
 
+        $this->automateEbayLogin();
+
         return response()->json(['error' => 'No valid token. Please authorize again.'], 401);
+    }
+
+    private function automateEbayLogin()
+    {
+        $response = Http::get(url('/api/ebay/auth'));
+        Log::info('Automated login triggered.', ['response' => $response->json()]);
     }
 
     /**
