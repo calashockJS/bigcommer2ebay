@@ -1434,9 +1434,10 @@ class ApiController extends Controller
             Log::info('$apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
+            $data = $response->json();
+            echo '<pre>';print_r($data);
 
             if ($response->successful()) {
-                $data = $response->json();
                 return $data['access_token'] ?? null;
             }
         } catch (\Exception $e) {
