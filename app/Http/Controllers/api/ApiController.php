@@ -1435,7 +1435,7 @@ class ApiController extends Controller
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
             $data = $response->json();
-            echo '<pre>';print_r($data);
+            echo '<pre>';print_r($data);die;
 
             if ($response->successful()) {
                 return $data['access_token'] ?? null;
