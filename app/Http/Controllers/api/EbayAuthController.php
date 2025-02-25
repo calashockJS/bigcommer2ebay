@@ -274,7 +274,7 @@ class EbayAuthController extends Controller
         $authUrl = "https://auth".$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}&redirect_uri=" . urlencode($this->redirectUri) . "&response_type=code&scope=" . urlencode($this->scopes);
 
         $response = Http::withBasicAuth($this->ebayUsername, $this->ebayPassword)->get($authUrl);
-
+        echo '$response :: '.json_encode($response);
         if ($response->successful() && isset($response['code'])) {
             return $response['code'];
         }
