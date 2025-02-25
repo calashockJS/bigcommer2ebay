@@ -1326,6 +1326,8 @@ class ApiController extends Controller
         }
     }
 
+    
+
     private function getBigCommerceProductDetailsBySKU($sku)
     {
         $url = $this->baseUrl . '/catalog/products?sku=' . $sku;

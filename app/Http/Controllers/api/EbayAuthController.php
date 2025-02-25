@@ -22,15 +22,15 @@ class EbayAuthController extends Controller
 
     public function __construct()
     {
-        $this->clientId = env('EBAY_SANDBOX_CLIENT_ID');
-        $this->clientSecret = env('EBAY_SANDBOX_CLIENT_SECRET');
-        $this->redirectUri = env('EBAY_SANDBOX_REDIRECT_URI');
+        $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
+        $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
+        $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
 
         $this->ebayUsername = 'luigi.moccia@calashock.com';//env('EBAY_USERNAME');
         $this->ebayPassword = 'g^3T9oEp*^W83nP7';//env('EBAY_PASSWORD');
 
         // Get environment type value from .env
-        $envTypeEbay = env('EBAY_ENV_TYPE');
+        $envTypeEbay = '.sandbox.';//env('EBAY_ENV_TYPE');
         $this->ebayEnvType = $envTypeEbay;
         
         if ($envTypeEbay == '.sandbox.') {
@@ -86,7 +86,8 @@ class EbayAuthController extends Controller
 
         if ($tokenData) {
             $this->storeToken($tokenData);
-            return response()->json(['message' => 'Token stored successfully', 'token' => $tokenData]);
+            //return response()->json(['message' => 'Token stored successfully', 'token' => $tokenData]);
+            return response()->json(['message' => 'Token stored successfully']);
         }
 
         return response()->json(['error' => 'Failed to retrieve access token'], 500);
@@ -108,13 +109,13 @@ class EbayAuthController extends Controller
         ]);
 
         if ($response->successful()) {
-            /*$data = $response->json();
+            $data = $response->json();
             return [
                 'access_token'  => $data['access_token'],
                 'refresh_token' => $data['refresh_token'] ?? null,
                 'expires_at'    => time() + $data['expires_in']
-            ];*/
-            return $response->json();
+            ];
+            //return $response->json();
         }
 
         return null;
@@ -126,35 +127,36 @@ class EbayAuthController extends Controller
     //public function getUserAccessToken()
     public function getAppAccessToken()
     {
-        echo 'comming to getAppAccessToken() ';
+        //echo 'comming to getAppAccessToken() ';
         $storedToken = $this->readStoredToken();
 
         if ($storedToken && !$this->isTokenExpired($storedToken)) {
             echo 'comming to collect access token and return back ';
             return response()->json(['access_token' => $storedToken['access_token']]);
-        }
-
-        /*if ($storedToken && isset($storedToken['refresh_token'])) {
+        } else if ($storedToken && isset($storedToken['refresh_token'])) {
             $newToken = $this->refreshUserToken($storedToken['refresh_token']);
 
             if ($newToken) {
                 $this->storeToken($newToken);
                 return response()->json(['access_token' => $newToken['access_token']]);
             }
-        }*/
+        } else {
+            $this->redirectToEbay();
+        }
         // Token expired or not found, get a new one
-        echo 'comming to call getAppAccessToken() ';
-        $newToken = $this->fetchNewAppToken();
+        //echo 'comming to call getAppAccessToken() ';
+        /*$newToken = $this->fetchNewAppToken();
         
         if ($newToken) {
             echo 'now got recent token $newToken ::'.json_encode($newToken);
             $this->storeToken($newToken);
             return response()->json(['access_token' => $newToken['access_token']]);
         }
-        echo 'no $newToken.. so calling  to automateEbayLogin() ';
+        //echo 'no $newToken.. so calling  to automateEbayLogin() ';
         $this->automateEbayLogin();
 
-        return response()->json(['error' => 'No valid token. Please authorize again.'], 401);
+        return response()->json(['error' => 'No valid token. Please authorize again.'], 401);*/
+        
     }
 
     private function automateEbayLogin()
@@ -248,19 +250,19 @@ class EbayAuthController extends Controller
 
     public function automatedEbayLogin()
     {
-        echo 'now at automatedEbayLogin() and going to call  getAuthorizationCode()';
+        //echo 'now at automatedEbayLogin() and going to call  getAuthorizationCode()';
         $authorizationCode = $this->getAuthorizationCode();
-        echo 'now got $authorizationCode ::'.$authorizationCode;
+        //echo 'now got $authorizationCode ::'.$authorizationCode;
         if (!$authorizationCode) {
             echo 'no...Failed to get authorization code';
             Log::error('Failed to get authorization code');
             return response()->json(['error' => 'Failed to get authorization code'], 401);
         }
-        echo 'now going to call exchangeCodeForToken()::';
+        //echo 'now going to call exchangeCodeForToken()::';
         $accessToken = $this->exchangeCodeForToken($authorizationCode);
-        echo 'now got $accessToken ::'.json_encode($authorizationCode);
+        //echo 'now got $accessToken ::'.json_encode($authorizationCode);
         if ($accessToken) {
-            echo 'now going to stora token and return access token ::'.$accessToken['access_token'];
+            //echo 'now going to stora token and return access token ::'.$accessToken['access_token'];
             $this->storeToken($accessToken);
             return response()->json(['access_token' => $accessToken['access_token']]);
         }
@@ -274,7 +276,7 @@ class EbayAuthController extends Controller
         $authUrl = "https://auth".$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}&redirect_uri=" . urlencode($this->redirectUri) . "&response_type=code&scope=" . urlencode($this->scopes);
 
         $response = Http::withBasicAuth($this->ebayUsername, $this->ebayPassword)->get($authUrl);
-        echo '$response :: '.json_encode($response);
+        //echo '$response :: '.json_encode($response);
         if ($response->successful() && isset($response['code'])) {
             return $response['code'];
         }
