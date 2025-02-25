@@ -63,5 +63,7 @@ Route::post('/ebay/return-policy', [EbayPolicyController::class, 'createReturnPo
 Route::get('/ebay/auth', [EbayAuthController::class, 'redirectToEbay']); // Redirect user
 Route::get('/ebay/callback', [EbayAuthController::class, 'handleEbayCallback']); // Handle callback
 Route::get('/ebay/token', [EbayAuthController::class, 'getUserAccessToken']); // Get access token
-Route::get('/ebay/cli-token', [EbayAuthController::class, 'getAppAccessToken']);
+//Route::get('/ebay/cli-token', [EbayAuthController::class, 'getAppAccessToken']);
+Route::get('/ebay/cli-token', [EbayAuthController::class, 'automatedEbayLogin']);
+
 Route::get('/ebay/cli-token-1', [EbayAuthController::class, 'fetchNewAppToken']);
