@@ -37,9 +37,9 @@ class ApiController extends Controller
             } else {
                 $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
             }*/
-            echo 'KKK';
+            //echo 'KKK';
             $ebayAccessToken = $this->fetchEbayAccessToken();
-            echo '$ebayAccessToken ::'.$ebayAccessToken;die;
+            //echo '$ebayAccessToken ::'.$ebayAccessToken;die;
         }
 
         if (!$ebayAccessToken) {
@@ -1433,12 +1433,12 @@ class ApiController extends Controller
         try {
             $baseUrl = env('BASE_URL'); // Ensure BASE_URL is set in .env
             $apiEndpoint = $baseUrl . '/api/ebay/cli-token';
-            echo '$apiEndpoint ::'.$apiEndpoint;
+            //echo '$apiEndpoint ::'.$apiEndpoint;
             Log::info('$apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
             $data = $response->json();
-            echo '<pre>';print_r($data);die;
+            //echo '<pre>';print_r($data);die;
 
             if ($response->successful()) {
                 return $data['access_token'] ?? null;
