@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class EbayAuthController extends Controller
 {
@@ -26,8 +28,8 @@ class EbayAuthController extends Controller
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
 
-        $this->ebayUsername = 'luigi.moccia@calashock.com';//env('EBAY_USERNAME');
-        $this->ebayPassword = 'g^3T9oEp*^W83nP7';//env('EBAY_PASSWORD');
+        $this->ebayUsername = 'testuser_judhisahoo';//env('EBAY_USERNAME');
+        $this->ebayPassword = 'Jswecom*312#';//env('EBAY_PASSWORD');
 
         // Get environment type value from .env
         $envTypeEbay = '.sandbox.';//env('EBAY_ENV_TYPE');
@@ -37,6 +39,97 @@ class EbayAuthController extends Controller
             $this->tokenFile = 'ebay_sandbox_user_token.txt';
         }else{
             $this->tokenFile = 'ebay_user_token.txt';
+        }
+    }
+
+    /**
+     * Automated headless browser authentication for eBay
+     */
+    public function automatedEbayAuth()
+    {
+        // Check if we already have a valid token
+        $storedToken = $this->readStoredToken();
+        if ($storedToken && !$this->isTokenExpired($storedToken)) {
+            return response()->json([
+                'message' => 'Using existing token',
+                'access_token' => $storedToken['access_token']
+            ]);
+        }
+
+        // Try to refresh token if exists
+        if ($storedToken && isset($storedToken['refresh_token'])) {
+            $newToken = $this->refreshUserToken($storedToken['refresh_token']);
+            if ($newToken) {
+                $this->storeToken($newToken);
+                return response()->json([
+                    'message' => 'Token refreshed successfully',
+                    'access_token' => $newToken['access_token']
+                ]);
+            }
+        }
+
+        // No valid token, initiate headless browser auth
+        try {
+            // Generate a state parameter for security
+            $state = bin2hex(random_bytes(16));
+            
+            // Build the auth URL
+            $authUrl = "https://auth".$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}"
+                . "&redirect_uri=" . urlencode($this->redirectUri)
+                . "&response_type=code"
+                . "&scope=" . urlencode($this->scopes)
+                . "&state={$state}";
+            
+            // Execute the Node.js script to handle automated browser login
+            $scriptPath = base_path('node_scripts/ebay_auth.js');
+            
+            $process = new Process([
+                'node', 
+                $scriptPath, 
+                $authUrl, 
+                $this->ebayUsername, 
+                $this->ebayPassword,
+                $state
+            ]);
+            
+            $process->setTimeout(60); // Set timeout to 60 seconds
+            $process->run();
+            
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+            
+            $output = json_decode($process->getOutput(), true);
+            
+            if (isset($output['error'])) {
+                return response()->json(['error' => $output['error']], 400);
+            }
+            
+            if (!isset($output['code']) || !isset($output['state'])) {
+                return response()->json(['error' => 'Invalid response from authentication process'], 400);
+            }
+            
+            // Verify state parameter
+            if ($output['state'] !== $state) {
+                return response()->json(['error' => 'State mismatch, possible CSRF attack'], 400);
+            }
+            
+            // Exchange the code for a token
+            $tokenData = $this->exchangeCodeForToken($output['code']);
+            
+            if ($tokenData) {
+                $this->storeToken($tokenData);
+                return response()->json([
+                    'message' => 'Authentication successful and token stored',
+                    'access_token' => $tokenData['access_token']
+                ]);
+            }
+            
+            return response()->json(['error' => 'Failed to exchange code for token'], 500);
+            
+        } catch (\Exception $e) {
+            Log::error('eBay automated auth error: ' . $e->getMessage());
+            return response()->json(['error' => 'Authentication failed: ' . $e->getMessage()], 500);
         }
     }
 
