@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
@@ -374,6 +375,142 @@ class ApiController extends Controller
     /**
      * Create eBay Product
      *
+     * @OA\Post(
+     *     path="/api/ebay/bc-sku-to-ebay-listing/{bcsku}",
+     *     summary="Create a inventory item, then create a offer and publishh that on eBay",
+     *     tags={"BC to eBay Listing"},
+     *     @OA\Parameter(
+     *         name="accessToken",
+     *         in="query",
+     *         description="User Token denerated at eBay Developer site.",
+     *         required=false,
+     *         @OA\Schema(type="string", default="")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Product successfully created on eBay",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="responses", type="array", @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="sku", type="string"),
+     *                 @OA\Property(property="status", type="integer"),
+     *                 @OA\Property(property="response", type="object")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized - eBay Access Token not found"),
+     *     @OA\Response(response=404, description="No products found"),
+     *     @OA\Response(response=500, description="Server error")
+     * )
+     */
+    public function createEbayProductWithBCSkuWeb($bcsku,Request $request)
+    {
+        if($this->accessToken==''){
+            return Redirect::back()->withErrors(['msg' => 'Please generate the ebay access token using AUTH  button at rop right corner.']);
+        }
+        // Get the product list
+        $product = $this->getBigCommerceProductDetailsBySKU($bcsku);
+        //echo '<pre>';print_r($product);die;
+
+        if (empty($product)) {
+            return array('type'=>'fail','message'=> 'Please provide valid Big Commerce SKU.');
+        }
+
+        // eBay API Endpoint (Sandbox)
+        $ebayApiUrl = "https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/";
+        //echo '$ebayApiUrl ::'.$ebayApiUrl;die;
+
+        // Loop through each product and send to eBay
+        $responses = [];
+        $sku = $product['sku'];
+        $quantity = $product['inventory_level'];
+        $quantity = ($quantity > 2) ? $quantity : 2;
+        $brandId = $product['brand_id'];
+        $brandName = $this->getBigCommerceBrandName($brandId);
+        $mpn = ($product['mpn'] == '') ? $sku : $product['mpn'];
+        $imageArr = $this->getBigCommerceProductImages($product['id']);
+
+        $weight = $product['weight'];
+        $weight = ($weight == null) ? "5.000" : $weight;
+        //$weight = (float) $weight;
+
+        $width = $product['width'];
+        $width = ($width == null) ? "6.0" : $width;
+        //$width = (float) $width;
+
+        $height = $product['height'];
+        $height = ($height == null) ? "2.0" : $height;
+        //$height = (float) $height;
+
+        $length = $product['depth'];
+        $length = ($length == null) ? "6.0" : $length;
+        //$length = (float) $length;
+
+        $productData = [
+            "availability" => [
+                "shipToLocationAvailability" => [
+                    "quantity" => $quantity
+                ]
+            ],
+            "condition" => "NEW",
+            "sku" => $sku,
+            "product" => [
+                "title" => str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT),
+                "description" => strip_tags($product['description']),
+                "aspects" => [
+                    "Brand" => [$brandName]
+                ],
+                "brand" => $brandName,
+                "mpn" => $mpn,
+                "imageUrls" => $imageArr
+            ],
+            "packageWeightAndSize" => [
+                "dimensions" => [
+                    "width" => $width,
+                    "length" => $length,
+                    "height" => $height,
+                    "unit" => "INCH"
+                ],
+                "shippingIrregular" => false,
+                "packageType" => "PACKAGE_THICK_ENVELOPE", // Ensure valid package type VERY_LARGE_PACK, FREIGHT, LARGE_ENVELOPE, USPS_FLAT_RATE_ENVELOPE, USPS_LARGE_PACK
+                "weight" => [
+                    "unit" => "POUND",
+                    "value" => $weight
+                ]
+            ]
+        ];
+        // Debugging JSON payload before sending
+        $productJson = json_encode($productData, JSON_PRETTY_PRINT);
+        Log::info("inventory craete or update Request Payload: " . $productJson);
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer $this->accessToken",
+            'Content-Type' => 'application/json',
+            'Content-Language' => 'en-US'
+        ])->put($ebayApiUrl . $sku, $productData); // Convert to raw JSON   json_decode(json_encode($productData), true)
+
+        //echo '<pre>';print_r($response->json());die;
+        if ($response->successful()) {
+            Log::info("Success Request Payload: ", [$response->json()]);
+            $responses[] = [
+                'sku' => $sku,
+                'status' => $response->status(),
+                'response' => $response->json()
+            ];
+            Log::info("going to call createOrRePlaceOffer() with ::$sku");
+            $this->createOrRePlaceOffer($sku);
+        } else {
+            Log::info($ebayApiUrl . $sku . ' == failed');
+            Log::info("create inventory fail response info: ", [$response->json()]);
+        }
+        return array('type'=>'successs','message' => $responses);
+    }
+
+    /**
+     * Create eBay Product
+     *
      * @OA\Get(
      *     path="/api/ebay/create-inventory",
      *     summary="Create a product on eBay",
@@ -556,6 +693,39 @@ class ApiController extends Controller
             if ($offerIdResponse) {
                 Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
                 $this->publishEbayOffer($offerIdResponse['offerId'],$sku);
+            }
+        }
+    }
+
+    private function createOrRePlaceOfferWeb($sku)
+    {
+        Log::info("checking offer details to related to $sku");
+        //now to check sku has offer Or Not
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$this->accessToken}",
+            'Content-Type' => 'application/json',
+        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
+
+        Log::info("response for checking $sku for offer details ::", [$response->json()]);
+
+        $offerIdNumber = false;
+        $offerId = '';
+        if ($response->successful()) {
+            Log::info('find offer and checking is published ot not');
+            $offerInfo = $response->json()['offers']['0'];
+            if ($offerInfo['status'] == 'UNPUBLISHED') {
+                Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
+                $this->publishEbayOfferWeb($offerInfo['offerId'],$sku);
+            } else {
+                Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
+            }
+        } else {
+            Log::info("Going to create new offer for $sku");
+            $offerIdResponse = $this->createOffer($sku);
+            Log::info("offer created response ::", [$offerIdResponse]);
+            if ($offerIdResponse) {
+                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
+                $this->publishEbayOfferWeb($offerIdResponse['offerId'],$sku);
             }
         }
     }
@@ -1221,6 +1391,69 @@ class ApiController extends Controller
             return response()->json($response->json(), $response->status());
         }else{
             return response()->json([], 400);
+        }
+        
+    }
+
+    /**
+     * Publish an Offer on eBay using SKU
+     *
+     * @OA\Post(
+     *     path="/api/ebay/publish-offer/{offerId}",
+     *     summary="Create an eBay Offer",
+     *     description="Dynamically fetches required data from eBay and creates an offer",
+     *     tags={"eBay Offers"},
+     *     @OA\Parameter(
+     *         name="offerId",
+     *         in="path",
+     *         required=true,
+     *         description="Offer ID",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="accessToken",
+     *         in="query",
+     *         description="User Token denerated at eBay Developer site.",
+     *         required=false,
+     *         @OA\Schema(type="string", default="")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Offer pulished successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="offerId", type="string", example="1234567890"),
+     *             @OA\Property(property="status", type="string", example="SUCCESS")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Failed to create offer")
+     *         )
+     *     )
+     * )
+     */
+    public function publishEbayOfferWeb($offerId,$sku)
+    {
+        /*$validatedData = $request->validate([
+            'offerId' => 'required|string'
+        ]);
+        $validatedData['offerId']
+        */
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$this->accessToken}",
+            'Content-Type' => 'application/json',
+            'Content-Language' => 'en-US'
+        ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
+
+        Log::info('response ::', [$response->json()]);
+        if($response->successful()){
+            $this->removeSkuFromJSONFile($sku);
+            return array('type'=>'successs','message' =>$response->json());
+        }else{
+            return array('type'=>'fail','message' =>'fail');
         }
         
     }

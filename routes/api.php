@@ -49,6 +49,7 @@ Route::get('/ebay/create-inventory', [ApiController::class, 'createEbayProduct']
 Route::get('/ebay/get-inventory-items', [ApiController::class, 'getAllEbayInventoryItems']);
 Route::post('/ebay/create-offer/{sku}', [ApiController::class, 'createOffer']);
 Route::post('/ebay/publish-offer/{offerId}', [ApiController::class, 'publishEbayOffer']);
+Route::get('/api/ebay/bc-sku-to-ebay-listing',[ApiController::class, 'createEbayProductWithBCSku']);
 
 Route::get('/ebay/generate-access-token', [ApiController::class, 'generateEbayAccessToken']);
 Route::get('/ebay/get-category-tree-id/{marketplace_id}', [ApiController::class, 'getCategoryTreeId']);

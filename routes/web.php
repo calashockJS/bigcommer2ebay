@@ -23,7 +23,7 @@ Route::get('/', function () {
 });
 
 Route::get('/bigcommerce/show-bc-sku', [ApiController::class, 'showSkuFromJSONFile']);
-Route::middleware('auth')->group(function(){
-    Route::get('/ebay/bc-sku-to-ebay-listing/{bcsku}', [ApiController::class, 'createEbayProductWithBCSku']);
-});
+//Route::middleware('auth')->group(function(){
+    Route::get('/ebay/bc-sku-to-ebay-listing/{bcsku}', [ApiController::class, 'createEbayProductWithBCSkuWeb']);
+//});
 
