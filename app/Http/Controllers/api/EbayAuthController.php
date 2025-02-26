@@ -108,6 +108,7 @@ class EbayAuthController extends Controller
             $process->run();
             
             if (!$process->isSuccessful()) {
+                echo '  failed exception   ';
                 throw new ProcessFailedException($process);
             }
             echo 'is this authorization code ::'.$process->getOutput();
