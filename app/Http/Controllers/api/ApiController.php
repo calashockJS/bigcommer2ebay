@@ -15,6 +15,8 @@ class ApiController extends Controller
     //private $baseUrl = 'https://api.bigcommerce.com/stores/u4thb/v3';
     private $baseUrl = 'https://api.bigcommerce.com/stores/l8m8i2ai7x/v3';
 
+    private $tokenFile = '';
+
     private $bigCommerceHeaders = [
         //'X-Auth-Token' => '8solk9a5bhgkv19z7529lelq3c6mw24',
         'X-Auth-Token' => '6tlsgp8ihjtquecp9lyyhqd58hpadez',
@@ -29,6 +31,16 @@ class ApiController extends Controller
         $envTypeEbay = env('EBAY_ENV_TYPE');
         $this->ebayEnvType = $envTypeEbay;
 
+        // Get environment type value from .env
+        $envTypeEbay = '.sandbox.';//env('EBAY_ENV_TYPE');
+        $this->ebayEnvType = $envTypeEbay;
+        
+        if ($envTypeEbay == '.sandbox.') {
+            $this->tokenFile = 'ebay_sandbox_user_token.txt';
+        }else{
+            $this->tokenFile = 'ebay_user_token.txt';
+        }
+
         $ebayAccessToken = $request->accessToken;
         if ($ebayAccessToken == '') {
             /*if ($envTypeEbay == '.sandbox.') {
@@ -37,9 +49,14 @@ class ApiController extends Controller
             } else {
                 $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
             }*/
-            echo 'KKK';
-            $ebayAccessToken = $this->fetchEbayAccessToken();
-            echo '$ebayAccessToken ::'.$ebayAccessToken;die;
+            //echo 'KKK';
+            //$ebayAccessToken = $this->fetchEbayAccessToken();
+            //echo '$ebayAccessToken ::'.$ebayAccessToken;die;
+            // Check if we already have a valid token
+            $storedToken = $this->readStoredToken();
+            if ($storedToken && !$this->isTokenExpired($storedToken)) {
+                $ebayAccessToken = $storedToken['access_token'];
+            }
         }
 
         if (!$ebayAccessToken) {
@@ -1448,5 +1465,35 @@ class ApiController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Read stored token from text file.
+     */
+    private function readStoredToken()
+    {
+        if (!Storage::exists($this->tokenFile)) {
+            return null;
+        }
+
+        $tokenData = json_decode(Storage::get($this->tokenFile), true);
+
+        return $tokenData ?: null;
+    }
+
+    /**
+     * Check if the stored token is expired.
+     */
+    private function isTokenExpired($tokenData)
+    {
+        return !isset($tokenData['expires_at']) || time() >= $tokenData['expires_at'];
+    }
+
+    /**
+     * Store the access token in a text file.
+     */
+    private function storeToken($tokenData)
+    {
+        Storage::put($this->tokenFile, json_encode($tokenData));
     }
 }

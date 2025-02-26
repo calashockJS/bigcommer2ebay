@@ -47,39 +47,27 @@ class EbayAuthController extends Controller
      */
     public function automatedEbayAuth()
     {
-        echo 'now at automatedEbayAuth() == ';
-        echo 'going to call readStoredToken()';
         // Check if we already have a valid token
         $storedToken = $this->readStoredToken();
         if ($storedToken && !$this->isTokenExpired($storedToken)) {
-            echo 'token exists with out expired ::'.json_encode($storedToken);
             return response()->json([
                 'message' => 'Using existing token',
                 'access_token' => $storedToken['access_token']
             ]);
-        }else{
-            echo "no token. going for refresh token checking";
         }
 
         // Try to refresh token if exists
         if ($storedToken && isset($storedToken['refresh_token'])) {
-            echo "yes stoted token. collect latest token with refresh token ::".$storedToken['refresh_token'].'..... going to call refreshUserToken()';
             $newToken = $this->refreshUserToken($storedToken['refresh_token']);
-            echo 'collecting latest refresh token :: '.json_encode($newToken);
             if ($newToken) {
                 $this->storeToken($newToken);
                 return response()->json([
                     'message' => 'Token refreshed successfully',
                     'access_token' => $newToken['access_token']
                 ]);
-            }else{
-                echo 'no refresh token getting';
             }
-        }else{
-            echo 'not refresh token found with last saved token';
         }
 
-        echo 'now going try catch clause';
         // No valid token, initiate headless browser auth
         try {
             // Generate a state parameter for security
@@ -91,7 +79,6 @@ class EbayAuthController extends Controller
                 . "&response_type=code"
                 . "&scope=" . urlencode($this->scopes)
                 . "&state={$state}";
-            echo '$authUrl :: '.$authUrl;
             // Execute the Node.js script to handle automated browser login
             $scriptPath = base_path('node_scripts/ebay_auth.js');
             
@@ -111,34 +98,25 @@ class EbayAuthController extends Controller
                 echo '  failed exception   ';
                 throw new ProcessFailedException($process);
             }
-            echo 'is this authorization code ::'.$process->getOutput();
             $output = json_decode($process->getOutput(), true);
             
             if (isset($output['error'])) {
                 echo '$output["error"] '.$output['error'];
                 return response()->json(['error' => $output['error']], 400);
-            }else{
-                echo 'no no $output["error"]';
             }
             
             if (!isset($output['code']) || !isset($output['state'])) {
                 echo 'not getting code or state, so Invalid response from authentication process';
                 return response()->json(['error' => 'Invalid response from authentication process'], 400);
-            }else{
-                echo 'now going to check state or code data';
             }
             
             // Verify state parameter
             if ($output['state'] !== $state) {
                 echo '$output["state"] is not matching with '.$state;
                 return response()->json(['error' => 'State mismatch, possible CSRF attack'], 400);
-            }else{
-                echo '$output["state"] is matching with '.$state;
             }
-            echo 'going to collect access token using code '.$output['code'];
             // Exchange the code for a token
             $tokenData = $this->exchangeCodeForToken($output['code']);
-            echo 'getting token from exchangeCodeForToken() ::'.json_encode($tokenData);
             if ($tokenData) {
                 $this->storeToken($tokenData);
                 return response()->json([
@@ -214,7 +192,7 @@ class EbayAuthController extends Controller
      */
     private function exchangeCodeForToken($code)
     {
-        echo 'now at exchangeCodeForToken()';
+        //echo 'now at exchangeCodeForToken()';
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
@@ -223,7 +201,7 @@ class EbayAuthController extends Controller
             'code'         => $code,
             'redirect_uri' => $this->redirectUri,
         ]);
-        echo 'now got $response ::'.json_encode($response->json());
+        //echo 'now got $response ::'.json_encode($response->json());
         if ($response->successful()) {
             $data = $response->json();
             return [
