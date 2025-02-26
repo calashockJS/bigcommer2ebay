@@ -1457,7 +1457,7 @@ class ApiController extends Controller
         Storage::put($this->tokenFile, json_encode($tokenData));
     }
 
-    public function getSKUByWebhook($bcsku, Request $request)
+    public function getSKUByWebhook(Request $request)
     {
         $filePath = 'big-commerce-sku.json';
         //$bcsku,
