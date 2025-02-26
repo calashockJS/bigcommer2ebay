@@ -49,7 +49,7 @@ class ApiController extends Controller
             } else {
                 $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
             }*/
-            //echo 'KKK';
+            echo 'KKK';
             //$ebayAccessToken = $this->fetchEbayAccessToken();
             //echo '$ebayAccessToken ::'.$ebayAccessToken;die;
             // Check if we already have a valid token
@@ -58,7 +58,7 @@ class ApiController extends Controller
                 $ebayAccessToken = $storedToken['access_token'];
             }
         }
-
+        echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
             return response()->json(['error' => 'eBay Access Token not found in .env'], 401);
         }
