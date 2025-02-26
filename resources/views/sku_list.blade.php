@@ -62,7 +62,10 @@
                         <tr>
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $sku }}</td>
-                            <td><a href="{{ url('/ebay/bc-sku-to-ebay-listing/'.urlencode($sku)) }}" class="btn btn-primary">Create Product in eBay</a></td>
+                            <td>
+                                <a href="{{ url('/ebay/bc-sku-to-ebay-listing/'.urlencode($sku)) }}" class="btn btn-primary">Create Product in eBay</a> &nbsp; &nbsp;
+                                <a href="{{ url('/ebay/bc-sku-remove/'.urlencode($sku)) }}" class="btn btn-primary">Remove BC Sku</a>
+                            </td>
                         </tr>
                         @empty
                         <tr>

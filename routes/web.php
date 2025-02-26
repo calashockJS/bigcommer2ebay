@@ -27,7 +27,7 @@ Route::get('/bigcommerce/show-bc-sku', [ApiController::class, 'showSkuFromJSONFi
 //Route::middleware('auth')->group(function(){
     Route::get('/ebay/bc-sku-to-ebay-listing/{bcsku}', [ApiController::class, 'createEbayProductWithBCSkuWeb']);
 //});
-
+Route::get('/ebay/bc-sku-remove/{bcsku}', [ApiController::class, 'removeSkuFromJSONFile']);
 
 Route::get('/ebay/auth', [EbayWebAuthController::class, 'redirectToEbay']); // Redirect user
 Route::get('/ebay/callback', [EbayWebAuthController::class, 'handleEbayCallback']); // Handle callback

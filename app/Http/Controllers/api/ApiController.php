@@ -1755,17 +1755,20 @@ class ApiController extends Controller
         return response()->json(['message' => 'SKU updated successfully', 'data' => $jsonData]);
     }
 
-    private function removeSkuFromJSONFile($sku)
+    public function removeSkuFromJSONFile($sku)
     {
         $filePath = 'big-commerce-sku.json';
 
         if (!Storage::exists($filePath)) {
-            return response()->json(['message' => 'File not found.'], 404);
+            //return response()->json(['message' => 'File not found.'], 404);
+            return Redirect::back()->withErrors(['msg' => 'File not found.']);
         }
 
         $jsonData = json_decode(Storage::get($filePath), true);
         if (!is_array($jsonData)) {
-            return response()->json(['message' => 'Invalid file content.'], 400);
+            //return response()->json(['message' => 'Invalid file content.'], 400);
+            return Redirect::back()->withErrors(['msg' => 'Invalid file content.']);
+
         }
 
         $jsonData = array_filter($jsonData, function ($item) use ($sku) {
@@ -1774,7 +1777,8 @@ class ApiController extends Controller
 
         Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
 
-        return response()->json(['message' => 'SKU removed successfully', 'data' => $jsonData]);
+        //return response()->json(['message' => 'SKU removed successfully', 'data' => $jsonData]);
+        return redirect('/bigcommerce/show-bc-sku')->with(['msg' => 'SKU removed successfully.']);
     }
 
     public function showSkuFromJSONFile()
