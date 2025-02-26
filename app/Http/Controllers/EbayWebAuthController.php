@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -90,7 +91,8 @@ class EbayWebAuthController extends Controller
         if ($tokenData) {
             $this->storeToken($tokenData);
             //return response()->json(['message' => 'Token stored successfully', 'token' => $tokenData]);
-            return array('type'=>'successs','message' => 'Token stored successfully');
+            //return array('type'=>'successs','message' => 'Token stored successfully');
+            return Redirect::back()->with(['msg' => 'Token stored successfully.']);
         }
 
         return array('type'=>'fail','message'=> 'Failed to retrieve access token');
