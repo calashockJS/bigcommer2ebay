@@ -44,7 +44,7 @@
             <div class="col-8">
                 <h2 class="mb-3">Product SKU List in Bigcommerce</h2>
             </div>
-            <div class="col-4"><a href="{{ url('/ebay/auth') }}" class="btn btn-primary">Update eBay Access Token</a></div>
+            <div class="col-4"><a href="{{ url('/api/ebay/auth') }}" class="btn btn-primary">Update eBay Access Token</a></div>
         </div>
 
         <div class="row">
