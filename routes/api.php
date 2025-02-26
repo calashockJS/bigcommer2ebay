@@ -42,10 +42,12 @@ Route::post('/bigcommerce/products', [ApiController::class, 'createProduct']);
 Route::get('/bigcommerce/products/{id}', [ApiController::class, 'getProductById']);
 Route::put('/bigcommerce/products/{id}', [ApiController::class, 'updateProduct']);
 Route::delete('/bigcommerce/products/{id}', [ApiController::class, 'deleteProduct']);
+Route::get('/bigcommerce/show-bc-sku', [ApiController::class, 'showSkuFromJSONFile']);
+Route::post('/middleware-webhook/sku', [ApiController::class, 'getSKUByWebhook']);
 
 Route::get('/ebay/inventory-item/{sku}', [ApiController::class, 'getInventoryItem']);
 Route::get('/ebay/create-inventory', [ApiController::class, 'createEbayProduct']);
-Route::post('/ebay/bc-sku-to-ebay-listing', [ApiController::class, 'createEbayProductWithBCSku']);
+Route::post('/ebay/bc-sku-to-ebay-listing/{bcsku}', [ApiController::class, 'createEbayProductWithBCSku']);
 Route::get('/ebay/get-inventory-items', [ApiController::class, 'getAllEbayInventoryItems']);
 Route::post('/ebay/create-offer/{sku}', [ApiController::class, 'createOffer']);
 Route::post('/ebay/publish-offer/{offerId}', [ApiController::class, 'publishEbayOffer']);

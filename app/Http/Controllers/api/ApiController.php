@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -49,7 +50,7 @@ class ApiController extends Controller
             } else {
                 $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
             }*/
-            echo 'KKK';
+            //echo 'KKK';
             //$ebayAccessToken = $this->fetchEbayAccessToken();
             //echo '$ebayAccessToken ::'.$ebayAccessToken;die;
             // Check if we already have a valid token
@@ -58,7 +59,7 @@ class ApiController extends Controller
                 $ebayAccessToken = $storedToken['access_token'];
             }
         }
-        echo '$ebayAccessToken ::'.$ebayAccessToken;
+        //echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
             return response()->json(['error' => 'eBay Access Token not found in .env'], 401);
         }
@@ -196,7 +197,7 @@ class ApiController extends Controller
      */
     public function getProducts()
     {
-        echo '$this->accessToken ::'.$this->accessToken;die;
+        //echo '$this->accessToken ::'.$this->accessToken;die;
         $url = $this->baseUrl . '/catalog/products';
 
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -267,54 +268,8 @@ class ApiController extends Controller
      *     @OA\Response(response=500, description="Server error")
      * )
      */
-    public function createEbayProductWithBCSku(Request $request)
+    public function createEbayProductWithBCSku($bcsku,Request $request)
     {
-        //$bcsku,
-        // Validate WEBHOOK-SECURITY-KEY header
-        if (!$request->hasHeader('WEBHOOK-SECURITY-KEY')) {
-            return response()->json([
-                'message' => 'WEBHOOK-SECURITY-KEY header is required',
-                'error' => 'Missing required header'
-            ], 401);
-        }
-
-        $securityKey = $request->header('WEBHOOK-SECURITY-KEY');
-
-        // Check if security key is blank
-        if (empty($securityKey)) {
-            return response()->json([
-                'message' => 'WEBHOOK-SECURITY-KEY cannot be empty',
-                'error' => 'Invalid header value'
-            ], 401);
-        }
-        $securityKeyValue = env('BC_WEBHOOK_SECURITY_KEY');
-        // Validate against expected security key value
-        if ($securityKey !== $securityKeyValue) {
-            return response()->json([
-                'message' => 'Invalid WEBHOOK-SECURITY-KEY provided',
-                'error' => 'Unauthorized'
-            ], 401);
-        }
-
-        // Validate WEBHOOK-SECURITY-KEY header
-        if (!$request->hasHeader('bcsku')) {
-            return response()->json([
-                'message' => 'BC Sku header is required',
-                'error' => 'Missing required header'
-            ], 401);
-        }
-
-        $bcsku = $request->header('bcsku');
-
-        // Check if security key is blank
-        if (empty($bcsku)) {
-            return response()->json([
-                'message' => 'BC Sku cannot be empty',
-                'error' => 'Invalid header value'
-            ], 401);
-        }
-
-        //die("RRr");
         // Get the product list
         $product = $this->getBigCommerceProductDetailsBySKU($bcsku);
         //echo '<pre>';print_r($product);die;
@@ -590,7 +545,7 @@ class ApiController extends Controller
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
                 Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
-                $this->publishEbayOffer($offerInfo['offerId']);
+                $this->publishEbayOffer($offerInfo['offerId'],$sku);
             } else {
                 Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
@@ -600,7 +555,7 @@ class ApiController extends Controller
             Log::info("offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
                 Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
-                $this->publishEbayOffer($offerIdResponse['offerId']);
+                $this->publishEbayOffer($offerIdResponse['offerId'],$sku);
             }
         }
     }
@@ -1246,7 +1201,7 @@ class ApiController extends Controller
      *     )
      * )
      */
-    public function publishEbayOffer($offerId)
+    public function publishEbayOffer($offerId,$sku)
     {
         /*$validatedData = $request->validate([
             'offerId' => 'required|string'
@@ -1261,8 +1216,13 @@ class ApiController extends Controller
         ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
 
         Log::info('response ::', [$response->json()]);
-
-        return response()->json($response->json(), $response->status());
+        if($response->successful()){
+            $this->removeSkuFromJSONFile($sku);
+            return response()->json($response->json(), $response->status());
+        }else{
+            return response()->json([], 400);
+        }
+        
     }
 
 
@@ -1450,12 +1410,12 @@ class ApiController extends Controller
         try {
             $baseUrl = env('BASE_URL'); // Ensure BASE_URL is set in .env
             $apiEndpoint = $baseUrl . '/api/ebay/cli-token';
-            echo '$apiEndpoint ::'.$apiEndpoint;
+            //echo '$apiEndpoint ::'.$apiEndpoint;
             Log::info('$apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
             $data = $response->json();
-            echo '<pre>';print_r($data);die;
+            //echo '<pre>';print_r($data);die;
 
             if ($response->successful()) {
                 return $data['access_token'] ?? null;
@@ -1496,4 +1456,108 @@ class ApiController extends Controller
     {
         Storage::put($this->tokenFile, json_encode($tokenData));
     }
+
+    public function getSKUByWebhook($bcsku, Request $request)
+    {
+        $filePath = 'big-commerce-sku.json';
+        //$bcsku,
+        // Validate WEBHOOK-SECURITY-KEY header
+        if (!$request->hasHeader('WEBHOOK-SECURITY-KEY')) {
+            return response()->json([
+                'message' => 'WEBHOOK-SECURITY-KEY header is required',
+                'error' => 'Missing required header'
+            ], 401);
+        }
+
+        $securityKey = $request->header('WEBHOOK-SECURITY-KEY');
+
+        // Check if security key is blank
+        if (empty($securityKey)) {
+            return response()->json([
+                'message' => 'WEBHOOK-SECURITY-KEY cannot be empty',
+                'error' => 'Invalid header value'
+            ], 401);
+        }
+        $securityKeyValue = env('BC_WEBHOOK_SECURITY_KEY');
+        // Validate against expected security key value
+        if ($securityKey !== $securityKeyValue) {
+            return response()->json([
+                'message' => 'Invalid WEBHOOK-SECURITY-KEY provided',
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        // Validate bcsku header
+        if (!$request->hasHeader('bcsku')) {
+            return response()->json([
+                'message' => 'BC Sku header is required',
+                'error' => 'Missing required header'
+            ], 401);
+        }
+
+        $bcsku = $request->header('bcsku');
+
+        // Check if security key is blank
+        if (empty($bcsku)) {
+            return response()->json([
+                'message' => 'BC Sku cannot be empty',
+                'error' => 'Invalid header value'
+            ], 401);
+        }
+
+        if (Storage::exists($filePath)) {
+            $jsonData = json_decode(Storage::get($filePath), true);
+            if (!is_array($jsonData)) {
+                $jsonData = [];
+            }
+        } else {
+            $jsonData = [];
+        }
+
+        if (!in_array($bcsku, $jsonData)) {
+            $jsonData[] = $bcsku;
+            Storage::put($filePath, json_encode($jsonData, JSON_PRETTY_PRINT));
+        }
+
+        return response()->json(['message' => 'SKU updated successfully', 'data' => $jsonData]);
+    }
+
+    private function removeSkuFromJSONFile($sku)
+    {
+        $filePath = 'big-commerce-sku.json';
+
+        if (!Storage::exists($filePath)) {
+            return response()->json(['message' => 'File not found.'], 404);
+        }
+
+        $jsonData = json_decode(Storage::get($filePath), true);
+        if (!is_array($jsonData)) {
+            return response()->json(['message' => 'Invalid file content.'], 400);
+        }
+
+        $jsonData = array_filter($jsonData, function ($item) use ($sku) {
+            return $item !== $sku;
+        });
+
+        Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
+
+        return response()->json(['message' => 'SKU removed successfully', 'data' => $jsonData]);
+    }
+
+    public function showSkuFromJSONFile()
+    {
+        $filePath = 'big-commerce-sku.json';
+
+        if (!Storage::exists($filePath)) {
+            return view('sku_list', ['skus' => []]);
+        }
+
+        $jsonData = json_decode(Storage::get($filePath), true);
+        if (!is_array($jsonData)) {
+            $jsonData = [];
+        }
+
+        return view('sku_list', ['skus' => $jsonData]);
+    }
+
 }

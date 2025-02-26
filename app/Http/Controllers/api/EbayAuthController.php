@@ -95,24 +95,24 @@ class EbayAuthController extends Controller
             $process->run();
             
             if (!$process->isSuccessful()) {
-                echo '  failed exception   ';
+                //echo '  failed exception   ';
                 throw new ProcessFailedException($process);
             }
             $output = json_decode($process->getOutput(), true);
             
             if (isset($output['error'])) {
-                echo '$output["error"] '.$output['error'];
+               // echo '$output["error"] '.$output['error'];
                 return response()->json(['error' => $output['error']], 400);
             }
             
             if (!isset($output['code']) || !isset($output['state'])) {
-                echo 'not getting code or state, so Invalid response from authentication process';
+                //echo 'not getting code or state, so Invalid response from authentication process';
                 return response()->json(['error' => 'Invalid response from authentication process'], 400);
             }
             
             // Verify state parameter
             if ($output['state'] !== $state) {
-                echo '$output["state"] is not matching with '.$state;
+                //echo '$output["state"] is not matching with '.$state;
                 return response()->json(['error' => 'State mismatch, possible CSRF attack'], 400);
             }
             // Exchange the code for a token
@@ -225,7 +225,7 @@ class EbayAuthController extends Controller
         $storedToken = $this->readStoredToken();
 
         if ($storedToken && !$this->isTokenExpired($storedToken)) {
-            echo 'comming to collect access token and return back ';
+            //echo 'comming to collect access token and return back ';
             return response()->json(['access_token' => $storedToken['access_token']]);
         } else if ($storedToken && isset($storedToken['refresh_token'])) {
             $newToken = $this->refreshUserToken($storedToken['refresh_token']);
@@ -348,7 +348,7 @@ class EbayAuthController extends Controller
         $authorizationCode = $this->getAuthorizationCode();
         //echo 'now got $authorizationCode ::'.$authorizationCode;
         if (!$authorizationCode) {
-            echo 'no...Failed to get authorization code';
+            //echo 'no...Failed to get authorization code';
             Log::error('Failed to get authorization code');
             return response()->json(['error' => 'Failed to get authorization code'], 401);
         }
