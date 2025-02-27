@@ -182,8 +182,8 @@ class EbayAuthController extends Controller
         if ($tokenData) {
             $this->storeToken($tokenData);
             //return response()->json(['message' => 'Token stored successfully', 'token' => $tokenData]);
-            return response()->json(['message' => 'Token stored successfully']);
-            //return redirect('/bigcommerce/show-bc-sku')->with(['msg' => 'Token stored successfully.']);
+            //return response()->json(['message' => 'Token stored successfully']);
+            return redirect('/bigcommerce/show-bc-sku')->with(['msg' => 'Token stored successfully.']);
         }
 
         return response()->json(['error' => 'Failed to retrieve access token'], 500);
