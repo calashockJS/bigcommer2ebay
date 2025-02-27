@@ -49,7 +49,10 @@ class ApiController extends Controller
         $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
         echo '$ebayAccessToken ::'.$ebayAccessToken;
         $this->accessToken = $ebayAccessToken;
-        echo '$this->accessToken :: '.$this->accessToken.' add end of construture';
+        sleep(5);
+        if($this->accessToken==''){
+            return redirect('/api/ebay/auth');
+        }
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
