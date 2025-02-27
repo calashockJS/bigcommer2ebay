@@ -500,7 +500,7 @@ class ApiController extends Controller
                 'response' => $response->json()
             ];
             Log::info("going to call createOrRePlaceOffer() with ::$sku");
-            $this->createOrRePlaceOffer($sku);
+            $this->createOrRePlaceOfferWeb($sku);
         } else {
             Log::info($ebayApiUrl . $sku . ' == failed');
             Log::info("create inventory fail response info: ", [$response->json()]);
@@ -715,7 +715,10 @@ class ApiController extends Controller
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
                 Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
-                $this->publishEbayOfferWeb($offerInfo['offerId'],$sku);
+                $getinfo = $this->publishEbayOfferWeb($offerInfo['offerId'],$sku);
+                if($getinfo['type']=='success'){
+                    return redirect()->back()->with(['message'=>'Product Listed Succssfully in ebay']);
+                }
             } else {
                 Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
@@ -724,8 +727,11 @@ class ApiController extends Controller
             $offerIdResponse = $this->createOffer($sku);
             Log::info("offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
-                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
-                $this->publishEbayOfferWeb($offerIdResponse['offerId'],$sku);
+                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
+                $getinfo = $this->publishEbayOfferWeb($offerIdResponse['offerId'],$sku);
+                if($getinfo['type']=='success'){
+                    return redirect()->back()->with(['message'=>'Product Listed Succssfully in ebay']);
+                }
             }
         }
     }
@@ -1436,6 +1442,7 @@ class ApiController extends Controller
      */
     public function publishEbayOfferWeb($offerId,$sku)
     {
+        Log::info('$offerId ::'.$offerId.' == $sku ::'.$sku);
         /*$validatedData = $request->validate([
             'offerId' => 'required|string'
         ]);
@@ -1448,10 +1455,10 @@ class ApiController extends Controller
             'Content-Language' => 'en-US'
         ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
 
-        Log::info('response ::', [$response->json()]);
+        Log::info('response while publsh the offer ::', [$response->json()]);
         if($response->successful()){
             $this->removeSkuFromJSONFile($sku);
-            return array('type'=>'successs','message' =>$response->json());
+            return array('type'=>'success','message' =>$response->json());
         }else{
             return array('type'=>'fail','message' =>'fail');
         }
@@ -1757,9 +1764,11 @@ class ApiController extends Controller
 
     public function removeSkuFromJSONFile($sku)
     {
+        Log::info('now at removeSkuFromJSONFile()');
         $filePath = 'big-commerce-sku.json';
 
         if (!Storage::exists($filePath)) {
+            Log::info('file not exists $filePath ::'.$filePath);
             //return response()->json(['message' => 'File not found.'], 404);
             return Redirect::back()->withErrors(['msg' => 'File not found.']);
         }
@@ -1797,4 +1806,5 @@ class ApiController extends Controller
         return view('sku_list', ['skus' => $jsonData]);
     }
 
+    
 }

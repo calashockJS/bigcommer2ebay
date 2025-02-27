@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SKU List</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -17,8 +18,8 @@
             <div class="col-2">&nbsp;</div>
             <div class="col-8">
                 <div class="alert alert-success">
-                    <ul>
-                        <li>{!! \Session::get('msg') !!}</li>
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        <li><i class="fas fa-check-circle text-success"></i> {!! \Session::get('msg') !!}</li>
                     </ul>
                 </div>
             </div>
@@ -27,17 +28,17 @@
         @endif
         @if ($errors->any())
         <div class="row">
-            <div class="col-2">&nbsp;</div>
-            <div class="col-8">
+            <div class="col-3">&nbsp;</div>
+            <div class="col-6">
                 <div class="alert alert-danger">
-                    <ul>
+                    <ul style="list-style-type: none; padding: 0;">
                         @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li><i class="fas fa-times-circle text-danger"></i> &nbsp; {{ $error }}</li>
                         @endforeach
                     </ul>
                 </div>
             </div>
-            <div class="col-2">&nbsp;</div>
+            <div class="col-3">&nbsp;</div>
         </div>
         @endif
         <div class="row">
