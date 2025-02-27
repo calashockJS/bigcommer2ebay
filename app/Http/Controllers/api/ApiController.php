@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EbayAuthMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +28,26 @@ class ApiController extends Controller
 
     private $accessToken, $ebayEnvType;
 
+    private $clientId;
+    private $clientSecret;
+    private $redirectUri;
+    private $scopes = 'https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory';
+
+    private $ebayUsername;
+    private $ebayPassword;
+
     public function __construct(Request $request)
     {
+        $this->middleware(EbayAuthMiddleware::class);
+        
+        $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
+        $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
+        $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
+        //$this->redirectUri = 'https://big-com-ebay-data-migrate.test/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
+
+        $this->ebayUsername = 'testuser_judhisahoo';//env('EBAY_USERNAME');
+        $this->ebayPassword = 'Jswecom*312#';//env('EBAY_PASSWORD');
+
         // Get environment type value from .env
         $envTypeEbay = env('EBAY_ENV_TYPE');
         $this->ebayEnvType = $envTypeEbay;
@@ -42,47 +61,43 @@ class ApiController extends Controller
         }else{
             $this->tokenFile = 'ebay_user_token.txt';
         }
-        echo 'now in constructure';
+        Log::channel('stderr')->info('now in constructure');
         $ebayAccessToken = $request->accessToken;
-        echo '$ebayAccessToken ::'.$ebayAccessToken;
-        echo 'now calling getUpdateAccessToken()';
+        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
+        Log::channel('stderr')->info('now calling getUpdateAccessToken()');
         $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
-        echo '$ebayAccessToken ::'.$ebayAccessToken;
+        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         $this->accessToken = $ebayAccessToken;
-        sleep(5);
-        if($this->accessToken==''){
-            return redirect('/api/ebay/auth');
-        }
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
-        echo 'now in getUpdateAccessToken';
+        Log::channel('stderr')->info('now in getUpdateAccessToken');
         if ($ebayAccessToken == '') {
-            echo 'now going to calling readStoredToken()';
+            Log::channel('stderr')->info( 'now going to calling readStoredToken()');
             // Check if we already have a valid token
             $storedToken = $this->readStoredToken();
-            echo '$storedToken ::'.json_encode($storedToken);
+            Log::channel('stderr')->info( '$storedToken ::'.json_encode($storedToken));
             if ($storedToken && !$this->isTokenExpired($storedToken)) {
                 $ebayAccessToken = $storedToken['access_token'];
-                echo "\n".' token  not expired $ebayAccessToken ::'.$ebayAccessToken;
+                Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
             }else if ($storedToken && isset($storedToken['refresh_token'])) {
-                echo 'token expired. so going to call refresh token'."\n";
-                echo 'going to call refreshUserToken()'."\n";
+                Log::channel('stderr')->info('token expired. so going to call refresh token');
+                Log::channel('stderr')->info( 'going to call refreshUserToken()');
                 // Try to refresh token if exists
                 $newToken = $this->refreshUserToken($storedToken['refresh_token']);
-                echo '$newToken ::'.json_encode($newToken);
+                Log::channel('stderr')->info( '$newToken ::'.json_encode($newToken));
                 if ($newToken) {
-                    echo "\n".' calling storeToken()';
+                    Log::channel('stderr')->info(' calling storeToken()');
                     $this->storeToken($newToken);
                     $ebayAccessToken = $newToken['access_token'];
-                    echo "\n".' token  not expired $ebayAccessToken ::'.$ebayAccessToken;
+                    Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                 }
             }
         }
         
         //echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
-            echo 'now in constructure $ebayAccessToken::'.$ebayAccessToken;
+            Log::channel('stderr')->info( 'now in constructure $ebayAccessToken::'.$ebayAccessToken);
         }
         return $ebayAccessToken;
     }
@@ -241,12 +256,11 @@ class ApiController extends Controller
     }
 
     public function getSyncProducts(Request $request){
-        echo 'now in getSyncProducts()'."\n";
-        echo 'going to in readStoredToken()'."\n";
+        Log::channel('stderr')->info('now in getSyncProducts()');
+        Log::channel('stderr')->info( 'going to in readStoredToken()');
         $storedToken = $this->readStoredToken();
-        echo '<pre>';print_r($storedToken);
-        echo '$this->accessToken ::'.$this->accessToken."\n";
-
+        Log::channel('stderr')->info('$storedToken ::'.json_encode($storedToken));
+        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
     }
 
     /**
@@ -727,6 +741,7 @@ class ApiController extends Controller
     private function createOrRePlaceOfferWeb($sku)
     {
         Log::info("checking offer details to related to $sku");
+        Log::channel('stderr')->info("checking offer details to related to $sku");
         //now to check sku has offer Or Not
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$this->accessToken}",
@@ -734,27 +749,34 @@ class ApiController extends Controller
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
 
         Log::info("response for checking $sku for offer details ::", [$response->json()]);
+        Log::channel('stderr')->info("response for checking $sku for offer details ::", [$response->json()]);
 
         $offerIdNumber = false;
         $offerId = '';
         if ($response->successful()) {
             Log::info('find offer and checking is published ot not');
+            Log::channel('stderr')->info('find offer and checking is published ot not');
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
                 Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
+                Log::channel('stderr')->info("going to publish the offer for $sku with " . $offerInfo['offerId']);
                 $getinfo = $this->publishEbayOfferWeb($offerInfo['offerId'],$sku);
                 if($getinfo['type']=='success'){
                     return redirect()->back()->with(['message'=>'Product Listed Succssfully in ebay']);
                 }
             } else {
                 Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
+                Log::channel('stderr')->info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
         } else {
             Log::info("Going to create new offer for $sku");
+            Log::channel('stderr')->info("Going to create new offer for $sku");
             $offerIdResponse = $this->createOffer($sku);
             Log::info("offer created response ::", [$offerIdResponse]);
+            Log::channel('stderr')->info("offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
                 Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
+                Log::channel('stderr')->info("Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
                 $getinfo = $this->publishEbayOfferWeb($offerIdResponse['offerId'],$sku);
                 if($getinfo['type']=='success'){
                     return redirect()->back()->with(['message'=>'Product Listed Succssfully in ebay']);
@@ -1017,8 +1039,10 @@ class ApiController extends Controller
      */
     public function createOffer($sku)
     {
+        Log::channel('stderr')->info('now in createOffer()');
         $validatedData = [];
         $validatedData['sku'] = $sku;
+        Log::channel('stderr')->info('now calling getBigCommerceProductDetailsBySKU() with $sku::'.$sku);
         $productData = $this->getBigCommerceProductDetailsBySKU($sku);
         $price = $productData['price'];
         $validatedData['price'] = $price;
@@ -1028,6 +1052,7 @@ class ApiController extends Controller
 
         // 1. Fetch Inventory Item Data
         $inventoryData = $this->getInventoryItemOne($validatedData['sku']);
+        Log::channel('stderr')->info('$inventoryData ::',[$inventoryData]);
         if (!$inventoryData) {
             return response()->json(['error' => 'Inventory item not found'], 404);
         }
@@ -1040,13 +1065,16 @@ class ApiController extends Controller
         // 2. Fetch Required eBay Data
         $marketplaceId = 'EBAY_US'; // Set marketplace ID manually for now  'EBAY_US'; 
         $fulfillmentPolicyId = $this->getFulfillmentPolicy($marketplaceId);
-
+        Log::channel('stderr')->info('$fulfillmentPolicyId ::'.$fulfillmentPolicyId);
         $paymentPolicyId = ($this->ebayEnvType == '.sandbox.') ? $this->getPaymentPolicy($marketplaceId) : "264239928014";
+        Log::channel('stderr')->info('$paymentPolicyId ::'.$paymentPolicyId);
         $returnPolicyId = $this->getReturnPolicy($marketplaceId);
+        Log::channel('stderr')->info('$returnPolicyId ::'.$returnPolicyId);
         $categoryId = "182189"; // Replace with actual category retrieval logic
         $currency = "USD";
         //$categoryId =  $categoryData->
         $merchantLocationKey = $this->getMerchantLocation();
+        Log::channel('stderr')->info('$merchantLocationKey ::'.$merchantLocationKey);
         //$merchantLocationKey = 'default-location';
         //echo '$fulfillmentPolicyId :: '.$fulfillmentPolicyId.' == $paymentPolicyId ::'.$paymentPolicyId.' == $returnPolicyId ::'.$returnPolicyId.' == $merchantLocationKey ::'.$merchantLocationKey;die;
 
@@ -1171,7 +1199,7 @@ class ApiController extends Controller
         ];
 
         //echo json_encode($offerData);die;
-        Log::info("data to craete offer ::", [$offerData]);
+        Log::channel('stderr')->info("data to craete offer ::", [$offerData]);
 
         // 4. Make Offer API Call
         $response = Http::withHeaders([
@@ -1179,8 +1207,8 @@ class ApiController extends Controller
             'Content-Type' => 'application/json',
             'Content-Language' => 'en-US'
         ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer', $offerData);
-        Log::info("offer created successfully ::", [$response->json()]);
-        Log::info("offer created successfully with offer id::" . $response->json()['offerId'], [$response->json()]);
+        Log::channel('stderr')->info("offer created successfully ::", [$response->json()]);
+        Log::channel('stderr')->info("offer created successfully with offer id::" . $response->json()['offerId'], [$response->json()]);
         return ($response->successful()) ? $response->json() : false;
     }
 
@@ -1194,7 +1222,13 @@ class ApiController extends Controller
             'Content-Type' => 'application/json',
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/{$sku}");
 
-        return $response->successful() ? $response->json() : null;
+        if($response->successful()){ 
+            Log::channel('stderr')->info('get details of inventoryr item with $sku ::'.$sku,[$response->json()]);
+            return $response->json();
+         }else{
+            Log::channel('stderr')->info('fail to get details of inventoryr item with $sku ::'.$sku);
+            return null;
+         } 
     }
 
     /**
@@ -1833,5 +1867,29 @@ class ApiController extends Controller
         return view('sku_list', ['skus' => $jsonData]);
     }
 
-    
+    /**
+     * Refresh the user access token.
+     */
+    private function refreshUserToken($refreshToken)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
+            'Content-Type'  => 'application/x-www-form-urlencoded'
+        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
+            'grant_type'    => 'refresh_token',
+            'refresh_token' => $refreshToken,
+            'scope'         => $this->scopes
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            return [
+                'access_token'  => $data['access_token'],
+                'refresh_token' => $data['refresh_token'] ?? null,
+                'expires_at'    => time() + $data['expires_in']
+            ];
+        }
+
+        return null;
+    }
 }
