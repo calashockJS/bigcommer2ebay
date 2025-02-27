@@ -58,6 +58,16 @@ class ApiController extends Controller
             $storedToken = $this->readStoredToken();
             if ($storedToken && !$this->isTokenExpired($storedToken)) {
                 $ebayAccessToken = $storedToken['access_token'];
+            }else if ($storedToken && isset($storedToken['refresh_token'])) {
+                // Try to refresh token if exists
+                $newToken = $this->refreshUserToken($storedToken['refresh_token']);
+                if ($newToken) {
+                    $this->storeToken($newToken);
+                    return response()->json([
+                        'message' => 'Token refreshed successfully',
+                        'access_token' => $newToken['access_token']
+                    ]);
+                }
             }
         }
         //echo '$ebayAccessToken ::'.$ebayAccessToken;
@@ -221,6 +231,10 @@ class ApiController extends Controller
         }
     }
 
+    public function getSyncProducts(Request $request){
+        $storedToken = $this->readStoredToken();
+        echo '<pre>';print_r($storedToken);
+    }
 
     /**
      * Create eBay Product

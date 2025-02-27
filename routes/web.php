@@ -31,4 +31,5 @@ Route::get('/ebay/bc-sku-remove/{bcsku}', [ApiController::class, 'removeSkuFromJ
 
 Route::get('/ebay/auth', [EbayWebAuthController::class, 'redirectToEbay']); // Redirect user
 Route::get('/ebay/callback', [EbayWebAuthController::class, 'handleEbayCallback']); // Handle callback
+Route::get('/bc2ebay/sync-products',[ApiController::class,'getSyncProducts']);
 
