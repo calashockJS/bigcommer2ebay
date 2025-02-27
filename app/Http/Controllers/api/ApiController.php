@@ -42,40 +42,46 @@ class ApiController extends Controller
         }else{
             $this->tokenFile = 'ebay_user_token.txt';
         }
-
+        echo 'now in constructure';
         $ebayAccessToken = $request->accessToken;
+        echo '$ebayAccessToken ::'.$ebayAccessToken;
+        echo 'now calling getUpdateAccessToken()';
+        $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
+        echo '$ebayAccessToken ::'.$ebayAccessToken;
+        $this->accessToken = $ebayAccessToken;
+        echo '$this->accessToken :: '.$this->accessToken.' add end of construture';
+    }
+
+    private function getUpdateAccessToken($ebayAccessToken=''){
+        echo 'now in getUpdateAccessToken';
         if ($ebayAccessToken == '') {
-            /*if ($envTypeEbay == '.sandbox.') {
-                // Get eBay Access Token from .env
-                $ebayAccessToken = env('EBAY_ACCESS_TOKEN_SANDBOX');
-            } else {
-                $ebayAccessToken = env('EBAY_ACCESS_TOKEN');
-            }*/
-            //echo 'KKK';
-            //$ebayAccessToken = $this->fetchEbayAccessToken();
-            //echo '$ebayAccessToken ::'.$ebayAccessToken;die;
+            echo 'now going to calling readStoredToken()';
             // Check if we already have a valid token
             $storedToken = $this->readStoredToken();
+            echo '$storedToken ::'.json_encode($storedToken);
             if ($storedToken && !$this->isTokenExpired($storedToken)) {
                 $ebayAccessToken = $storedToken['access_token'];
+                echo "\n".' token  not expired $ebayAccessToken ::'.$ebayAccessToken;
             }else if ($storedToken && isset($storedToken['refresh_token'])) {
+                echo 'token expired. so going to call refresh token'."\n";
+                echo 'going to call refreshUserToken()'."\n";
                 // Try to refresh token if exists
                 $newToken = $this->refreshUserToken($storedToken['refresh_token']);
+                echo '$newToken ::'.json_encode($newToken);
                 if ($newToken) {
+                    echo "\n".' calling storeToken()';
                     $this->storeToken($newToken);
-                    return response()->json([
-                        'message' => 'Token refreshed successfully',
-                        'access_token' => $newToken['access_token']
-                    ]);
+                    $ebayAccessToken = $newToken['access_token'];
+                    echo "\n".' token  not expired $ebayAccessToken ::'.$ebayAccessToken;
                 }
             }
         }
+        
         //echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
-            return response()->json(['error' => 'eBay Access Token not found in .env'], 401);
+            echo 'now in constructure $ebayAccessToken::'.$ebayAccessToken;
         }
-
-        $this->accessToken = $ebayAccessToken;
+        return $ebayAccessToken;
     }
 
     /**
@@ -232,8 +238,12 @@ class ApiController extends Controller
     }
 
     public function getSyncProducts(Request $request){
+        echo 'now in getSyncProducts()'."\n";
+        echo 'going to in readStoredToken()'."\n";
         $storedToken = $this->readStoredToken();
         echo '<pre>';print_r($storedToken);
+        echo '$this->accessToken ::'.$this->accessToken."\n";
+
     }
 
     /**
