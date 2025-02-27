@@ -59,7 +59,7 @@ class EbayAuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $ebayAccessToken = $this->getUpdateAccessToken();
-        if (empty($accessToken)) {
+        if (empty($ebayAccessToken)) {
             return redirect('/api/ebay/auth'); // Redirect if no token
         }
         return $next($request);
