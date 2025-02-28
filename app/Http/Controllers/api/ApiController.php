@@ -4,6 +4,8 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EbayAuthMiddleware;
+use App\Jobs\SyncProductBigCommerce2Ebay;
+use App\Services\EbaySyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,9 +38,12 @@ class ApiController extends Controller
     private $ebayUsername;
     private $ebayPassword;
 
-    public function __construct(Request $request)
+    protected $ebayService;
+
+    public function __construct(EbaySyncService $ebaySyncService,Request $request)
     {
         $this->middleware(EbayAuthMiddleware::class);
+        $this->ebayService = $ebaySyncService;
 
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
@@ -257,9 +262,22 @@ class ApiController extends Controller
 
     public function getSyncProducts(){
         $bcProducts = $this->getProducts();
-        foreach($bcProducts AS $k=>$v){
-            $this->createEbayProductWithBCSkuWeb($v['sku']);
+
+        // Start the queue worker synchronously
+        Artisan::call('queue:work', [
+            '--queue' => 'bc2ebay-uqueue',
+            '--tries' => 3,
+            '--timeout' => 90
+        ]);
+
+        foreach($bcProducts AS $k=>$product){
+            SyncProductBigCommerce2Ebay::dispatch($product['sku']);
+            //$this->createEbayProductWithBCSkuWeb($v['sku']);
         }
+
+        // Stop the queue worker gracefully
+        Artisan::call('queue:restart'); // Stops the worker after finishing current jobs
+        Redirect()->back()->with(['type'=>'success','msg'=>'Product Sync Successfully.']);
     }
 
     /**
@@ -311,105 +329,8 @@ class ApiController extends Controller
      */
     public function createEbayProductWithBCSku($bcsku)
     {
-        // Get the product list
-        $product = $this->getBigCommerceProductDetailsBySKU($bcsku);
-        //echo '<pre>';print_r($product);die;
-
-        if (empty($product)) {
-            return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
-        }
-
-        // eBay API Endpoint (Sandbox)
-        $ebayApiUrl = "https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/";
-        //echo '$ebayApiUrl ::'.$ebayApiUrl;die;
-
-        // Loop through each product and send to eBay
-        $responses = [];
-        $sku = $product['sku'];
-        $quantity = $product['inventory_level'];
-        $quantity = ($quantity > 2) ? $quantity : 2;
-        $brandId = $product['brand_id'];
-        $brandName = $this->getBigCommerceBrandName($brandId);
-        $mpn = ($product['mpn'] == '') ? $sku : $product['mpn'];
-        $imageArr = $this->getBigCommerceProductImages($product['id']);
-
-        $weight = $product['weight'];
-        $weight = ($weight == null) ? "5.000" : $weight;
-        //$weight = (float) $weight;
-
-        $width = $product['width'];
-        $width = ($width == null) ? "6.0" : $width;
-        //$width = (float) $width;
-
-        $height = $product['height'];
-        $height = ($height == null) ? "2.0" : $height;
-        //$height = (float) $height;
-
-        $length = $product['depth'];
-        $length = ($length == null) ? "6.0" : $length;
-        //$length = (float) $length;
-
-        $productData = [
-            "availability" => [
-                "shipToLocationAvailability" => [
-                    "quantity" => $quantity
-                ]
-            ],
-            "condition" => "NEW",
-            "sku" => $sku,
-            "product" => [
-                "title" => str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT),
-                "description" => strip_tags($product['description']),
-                "aspects" => [
-                    "Brand" => [$brandName]
-                ],
-                "brand" => $brandName,
-                "mpn" => $mpn,
-                "imageUrls" => $imageArr
-            ],
-            "packageWeightAndSize" => [
-                "dimensions" => [
-                    "width" => $width,
-                    "length" => $length,
-                    "height" => $height,
-                    "unit" => "INCH"
-                ],
-                "shippingIrregular" => false,
-                "packageType" => "PACKAGE_THICK_ENVELOPE", // Ensure valid package type VERY_LARGE_PACK, FREIGHT, LARGE_ENVELOPE, USPS_FLAT_RATE_ENVELOPE, USPS_LARGE_PACK
-                "weight" => [
-                    "unit" => "POUND",
-                    "value" => $weight
-                ]
-            ]
-        ];
-        // Debugging JSON payload before sending
-        $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::info("inventory craete or update Request Payload: " . $productJson);
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer $this->accessToken",
-            'Content-Type' => 'application/json',
-            'Content-Language' => 'en-US'
-        ])->put($ebayApiUrl . $sku, $productData); // Convert to raw JSON   json_decode(json_encode($productData), true)
-
-        //echo '<pre>';print_r($response->json());die;
-        if ($response->successful()) {
-            Log::info("Success Request Payload: ", [$response->json()]);
-            $responses[] = [
-                'sku' => $sku,
-                'status' => $response->status(),
-                'response' => $response->json()
-            ];
-            Log::info("going to call createOrRePlaceOffer() with ::$sku");
-            $this->createOrRePlaceOffer($sku);
-        } else {
-            Log::info($ebayApiUrl . $sku . ' == failed');
-            Log::info("create inventory fail response info: ", [$response->json()]);
-        }
-        return response()->json([
-            //'message' => 'eBay inventory items created successfully',
-            'responses' => $responses
-        ]);
+        $returnData = $this->ebayService->createEbayProductWithBCSkuService($bcsku);
+        return $returnData;
     }
 
     /**
@@ -450,102 +371,9 @@ class ApiController extends Controller
         if($this->accessToken==''){
             return Redirect::back()->withErrors(['msg' => 'Please generate the ebay access token using AUTH  button at rop right corner.']);
         }
-        // Get the product list
-        $product = $this->getBigCommerceProductDetailsBySKU($bcsku);
-        //echo '<pre>';print_r($product);die;
 
-        if (empty($product)) {
-            return array('type'=>'fail','message'=> 'Please provide valid Big Commerce SKU.');
-        }
-
-        // eBay API Endpoint (Sandbox)
-        $ebayApiUrl = "https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/";
-        //echo '$ebayApiUrl ::'.$ebayApiUrl;die;
-
-        // Loop through each product and send to eBay
-        $responses = [];
-        $sku = $product['sku'];
-        $quantity = $product['inventory_level'];
-        $quantity = ($quantity > 2) ? $quantity : 2;
-        $brandId = $product['brand_id'];
-        $brandName = $this->getBigCommerceBrandName($brandId);
-        $mpn = ($product['mpn'] == '') ? $sku : $product['mpn'];
-        $imageArr = $this->getBigCommerceProductImages($product['id']);
-
-        $weight = $product['weight'];
-        $weight = ($weight == null) ? "5.000" : $weight;
-        //$weight = (float) $weight;
-
-        $width = $product['width'];
-        $width = ($width == null) ? "6.0" : $width;
-        //$width = (float) $width;
-
-        $height = $product['height'];
-        $height = ($height == null) ? "2.0" : $height;
-        //$height = (float) $height;
-
-        $length = $product['depth'];
-        $length = ($length == null) ? "6.0" : $length;
-        //$length = (float) $length;
-
-        $productData = [
-            "availability" => [
-                "shipToLocationAvailability" => [
-                    "quantity" => $quantity
-                ]
-            ],
-            "condition" => "NEW",
-            "sku" => $sku,
-            "product" => [
-                "title" => str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT),
-                "description" => strip_tags($product['description']),
-                "aspects" => [
-                    "Brand" => [$brandName]
-                ],
-                "brand" => $brandName,
-                "mpn" => $mpn,
-                "imageUrls" => $imageArr
-            ],
-            "packageWeightAndSize" => [
-                "dimensions" => [
-                    "width" => $width,
-                    "length" => $length,
-                    "height" => $height,
-                    "unit" => "INCH"
-                ],
-                "shippingIrregular" => false,
-                "packageType" => "PACKAGE_THICK_ENVELOPE", // Ensure valid package type VERY_LARGE_PACK, FREIGHT, LARGE_ENVELOPE, USPS_FLAT_RATE_ENVELOPE, USPS_LARGE_PACK
-                "weight" => [
-                    "unit" => "POUND",
-                    "value" => $weight
-                ]
-            ]
-        ];
-        // Debugging JSON payload before sending
-        $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::info("inventory craete or update Request Payload: " . $productJson);
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer $this->accessToken",
-            'Content-Type' => 'application/json',
-            'Content-Language' => 'en-US'
-        ])->put($ebayApiUrl . $sku, $productData); // Convert to raw JSON   json_decode(json_encode($productData), true)
-
-        //echo '<pre>';print_r($response->json());die;
-        if ($response->successful()) {
-            Log::info("Success Request Payload: ", [$response->json()]);
-            $responses[] = [
-                'sku' => $sku,
-                'status' => $response->status(),
-                'response' => $response->json()
-            ];
-            Log::info("going to call createOrRePlaceOffer() with ::$sku");
-            $this->createOrRePlaceOfferWeb($sku);
-        } else {
-            Log::info($ebayApiUrl . $sku . ' == failed');
-            Log::info("create inventory fail response info: ", [$response->json()]);
-        }
-        return array('type'=>'successs','message' => $responses);
+        $returnData = $this->ebayService->createEbayProductWithBCSkuService($bcsku);
+        return array('type'=>'successs','message' => $returnData['responses']);
     }
 
     /**
@@ -1038,177 +866,7 @@ class ApiController extends Controller
      */
     public function createOffer($sku)
     {
-        Log::channel('stderr')->info('now in createOffer()');
-        $validatedData = [];
-        $validatedData['sku'] = $sku;
-        Log::channel('stderr')->info('now calling getBigCommerceProductDetailsBySKU() with $sku::'.$sku);
-        $productData = $this->getBigCommerceProductDetailsBySKU($sku);
-        $price = $productData['price'];
-        $validatedData['price'] = $price;
-        $quantity = $productData['inventory_level'];
-        $validatedData['quantity'] = ($quantity > 2) ? $quantity : 2;
-        $categoryName = $this->getBigCommerceCategoryName($productData['categories'][0]);
-
-        // 1. Fetch Inventory Item Data
-        $inventoryData = $this->getInventoryItemOne($validatedData['sku']);
-        Log::channel('stderr')->info('$inventoryData ::',[$inventoryData]);
-        if (!$inventoryData) {
-            return response()->json(['error' => 'Inventory item not found'], 404);
-        }
-
-        /**
-         * **** calling here to get category list data
-         */
-        //$categoryData = $this->getCategoryList(0);
-
-        // 2. Fetch Required eBay Data
-        $marketplaceId = 'EBAY_US'; // Set marketplace ID manually for now  'EBAY_US'; 
-        $fulfillmentPolicyId = $this->getFulfillmentPolicy($marketplaceId);
-        Log::channel('stderr')->info('$fulfillmentPolicyId ::'.$fulfillmentPolicyId);
-        $paymentPolicyId = ($this->ebayEnvType == '.sandbox.') ? $this->getPaymentPolicy($marketplaceId) : "264239928014";
-        Log::channel('stderr')->info('$paymentPolicyId ::'.$paymentPolicyId);
-        $returnPolicyId = $this->getReturnPolicy($marketplaceId);
-        Log::channel('stderr')->info('$returnPolicyId ::'.$returnPolicyId);
-        $categoryId = "182189"; // Replace with actual category retrieval logic
-        $currency = "USD";
-        //$categoryId =  $categoryData->
-        $merchantLocationKey = $this->getMerchantLocation();
-        Log::channel('stderr')->info('$merchantLocationKey ::'.$merchantLocationKey);
-        //$merchantLocationKey = 'default-location';
-        //echo '$fulfillmentPolicyId :: '.$fulfillmentPolicyId.' == $paymentPolicyId ::'.$paymentPolicyId.' == $returnPolicyId ::'.$returnPolicyId.' == $merchantLocationKey ::'.$merchantLocationKey;die;
-
-
-        // Ensure required IDs exist
-        /*if (!$fulfillmentPolicyId || !$paymentPolicyId || !$returnPolicyId || !$merchantLocationKey) {
-            return response()->json(['error' => 'Failed to fetch required eBay data'], 400);
-        }*/
-
-
-        $quantity = $inventoryData['availability']['shipToLocationAvailability']['quantity'] ?? 10;
-        $lotSize = max(2, $inventoryData['availability']['shipToLocationAvailability']['quantity'] ?? 2);
-        $quantityLimitPerBuyer = 2;
-        $countryCode = "US";
-        $shippingPackageCode = "UPSNextDay";
-        $shippingServiceType = "DOMESTIC";
-        // 3. Prepare Offer Data
-        /***
-          $offerData = [
-            "sku" => $validatedData['sku'],
-            "marketplaceId" => $marketplaceId,
-            "format" => "FIXED_PRICE",
-            "listingDescription" => $inventoryData['product']['description'],
-            "availableQuantity" => $inventoryData['availability']['shipToLocationAvailability']['quantity'] ?? 1,
-            "pricingSummary" => [
-                "price" => [
-                    "value" => $validatedData['price'],  // Replace with actual pricing logic
-                    "currency" => "USD"
-                ]
-            ],
-            "listingPolicies" =>[
-                "fulfillmentPolicies" => [
-                    [
-                        "shippingCost"=> [
-                            "value" => "0.0",
-                            "currency" => "USD"
-                        ]
-                    ]
-                ],
-                "paymentPolicies" => [
-                    [
-                        "paymentMethodTypes" => ["PAYPAL"]
-                    ]
-                ],
-                "returnPolicies" => [
-                    [
-                        "returnsAccepted" => true,
-                        "returnPeriod" => [
-                            "value" => 30,
-                            "unit" => "DAY"
-                        ]
-                    ]
-                ]
-            ],
-            "listing" => [
-                "listingPolicies" => [
-                    "fulfillmentPolicyId" => $fulfillmentPolicyId,
-                    "paymentPolicyId" => $paymentPolicyId,
-                    "returnPolicyId" => $returnPolicyId
-                ],
-                "locationSettings" => [
-                    "countryCode" => "US",
-                    "region" => "CA",
-                    "city" => "San Jose",
-                    "postalCode" => "95131"
-                ]
-            ],
-            "categoryId" => $categoryId,
-            "merchantLocationKey" => $merchantLocationKey
-        ]; */
-
-        $offerData = [
-            "availableQuantity" => $quantity,
-            "categoryId" => $categoryId,
-            "format" => "FIXED_PRICE",
-            "hideBuyerDetails" => false,
-            "includeCatalogProductDetails" => false,
-            "listingDescription" => $inventoryData['product']['description'],
-            "listingPolicies" => [
-                "eBayPlusIfEligible" => false,
-                "fulfillmentPolicyId" => $fulfillmentPolicyId,
-                "paymentPolicyId" => $paymentPolicyId, //"264239928014",
-                "returnPolicyId" => $returnPolicyId,
-                "shippingCostOverrides" => [
-                    [
-                        "shippingServiceType" => $shippingServiceType
-                    ]
-                ]
-            ],
-            "lotSize" => $lotSize,
-            "marketplaceId" => $marketplaceId,
-            "pricingSummary" => [
-                "price" => [
-                    "currency" => $currency,
-                    "value" => $validatedData['price']
-                ],
-                "pricingVisibility" => "PRE_CHECKOUT"
-            ],
-            "location" => [
-                "countryCode" => $countryCode,
-            ],
-            "quantityLimitPerBuyer" => $quantityLimitPerBuyer,
-            "sku" => $validatedData['sku'],
-            "merchantLocationKey" => $merchantLocationKey,
-            "shippingOptions" => [
-                [
-                    "shippingService" => "FedExFreight",
-                    "priority" => 0,
-                    "shippingCost" => [
-                        "value" => "10.00",
-                        "currency" => "USD"
-                    ],
-                    "additionalShippingCost" => [
-                        "value" => "2.00",
-                        "currency" => "USD"
-                    ],
-                    "freeShipping" => false,
-                    "shippingCarrierCode" => "FedEx",
-                    "shippingCostType" => "FLAT_RATE"
-                ]
-            ]
-        ];
-
-        //echo json_encode($offerData);die;
-        Log::channel('stderr')->info("data to craete offer ::", [$offerData]);
-
-        // 4. Make Offer API Call
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-            'Content-Language' => 'en-US'
-        ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer', $offerData);
-        Log::channel('stderr')->info("offer created successfully ::", [$response->json()]);
-        Log::channel('stderr')->info("offer created successfully with offer id::" . $response->json()['offerId'], [$response->json()]);
-        return ($response->successful()) ? $response->json() : false;
+        return $this->ebayService->createOfferService($sku);
     }
 
     /**
@@ -1216,18 +874,7 @@ class ApiController extends Controller
      */
     private function getInventoryItemOne($sku)
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/{$sku}");
-
-        if($response->successful()){ 
-            Log::channel('stderr')->info('get details of inventoryr item with $sku ::'.$sku,[$response->json()]);
-            return $response->json();
-         }else{
-            Log::channel('stderr')->info('fail to get details of inventoryr item with $sku ::'.$sku);
-            return null;
-         } 
+        return $this->ebayService->getInventoryItemOneService($sku);
     }
 
     /**
@@ -1235,12 +882,7 @@ class ApiController extends Controller
      */
     private function getFulfillmentPolicy($marketplaceId)
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/account/v1/fulfillment_policy?marketplace_id={$marketplaceId}");
-
-        return $response->successful() ? $response->json()['fulfillmentPolicies'][0]['fulfillmentPolicyId'] ?? null : null;
+        return $this->ebayService->getFulfillmentPolicyService($marketplaceId);
     }
 
     /**
@@ -1248,12 +890,7 @@ class ApiController extends Controller
      */
     private function getPaymentPolicy($marketplaceId)
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/account/v1/payment_policy?marketplace_id={$marketplaceId}");
-
-        return $response->successful() ? $response->json()['paymentPolicies'][0]['paymentPolicyId'] ?? null : null;
+        return $this->ebayService->getPaymentPolicyService($marketplaceId);
     }
 
     /**
@@ -1261,12 +898,7 @@ class ApiController extends Controller
      */
     private function getReturnPolicy($marketplaceId)
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/account/v1/return_policy?marketplace_id={$marketplaceId}");
-
-        return $response->successful() ? $response->json()['returnPolicies'][0]['returnPolicyId'] ?? null : null;
+        return $this->ebayService->getReturnPolicyService($marketplaceId);
     }
 
     /**
@@ -1274,14 +906,7 @@ class ApiController extends Controller
      */
     private function getMerchantLocation()
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/location");
-
-        //echo '<pre>';print_r($response->json());
-
-        return $response->successful() ? $response->json()['locations'][0]['merchantLocationKey'] ?? null : null;
+        return $this->ebayService->getMerchantLocationService();
     }
 
 
@@ -1439,26 +1064,7 @@ class ApiController extends Controller
      */
     public function publishEbayOffer($offerId,$sku)
     {
-        /*$validatedData = $request->validate([
-            'offerId' => 'required|string'
-        ]);
-        $validatedData['offerId']
-        */
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-            'Content-Language' => 'en-US'
-        ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
-
-        Log::info('response ::', [$response->json()]);
-        if($response->successful()){
-            $this->removeSkuFromJSONFile($sku);
-            return response()->json($response->json(), $response->status());
-        }else{
-            return response()->json([], 400);
-        }
-        
+        return $this->ebayService->publishEbayOfferService($offerId,$sku);
     }
 
     /**
@@ -1502,27 +1108,13 @@ class ApiController extends Controller
      */
     public function publishEbayOfferWeb($offerId,$sku)
     {
-        Log::info('$offerId ::'.$offerId.' == $sku ::'.$sku);
-        /*$validatedData = $request->validate([
-            'offerId' => 'required|string'
-        ]);
-        $validatedData['offerId']
-        */
-
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-            'Content-Language' => 'en-US'
-        ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
-
-        Log::info('response while publsh the offer ::', [$response->json()]);
-        if($response->successful()){
+        $returnData = $this->ebayService->publishEbayOfferService($offerId,$sku);
+        if($returnData['type']=='success'){
             $this->removeSkuFromJSONFile($sku);
-            return array('type'=>'success','message' =>$response->json());
+            return array('type'=>'success','message' =>$returnData['data']);
         }else{
             return array('type'=>'fail','message' =>'fail');
         }
-        
     }
 
 
@@ -1571,54 +1163,17 @@ class ApiController extends Controller
 
     private function getBigCommerceCategoryName($categoryId)
     {
-        $url = $this->baseUrl . '/catalog/categories/' . $categoryId;
-
-        $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
-
-        if ($response->successful()) {
-            //return response()->json($response->json()['data']);
-            return $response->json()['data']['name'];
-        } else {
-            return response()->json([
-                'error' => 'Failed to fetch products',
-                'message' => $response->body(),
-            ], $response->status());
-        }
+        return $this->ebayService->getBigCommerceCategoryNameService($categoryId);
     }
 
     private function getBigCommerceBrandName($brandId)
     {
-        $url = $this->baseUrl . '/catalog/brands/' . $brandId;
-
-        $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
-
-        if ($response->successful()) {
-            //return response()->json($response->json()['data']);
-            return $response->json()['data']['name'];
-        } else {
-            return response()->json([
-                'error' => 'Failed to fetch products',
-                'message' => $response->body(),
-            ], $response->status());
-        }
+        return $this->ebayService->getBigCommerceBrandNameService($brandId);
     }
-
-    
 
     private function getBigCommerceProductDetailsBySKU($sku)
     {
-        $url = $this->baseUrl . '/catalog/products?sku=' . $sku;
-        
-        $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
-        if ($response->successful()) {
-            //return response()->json($response->json()['data']);
-            return $response->json()['data']['0'];
-        } else {
-            return response()->json([
-                'error' => 'Failed to fetch products',
-                'message' => $response->body(),
-            ], $response->status());
-        }
+        return $this->ebayService->getBigCommerceProductDetailsBySKUService($sku);
     }
 
     /**
@@ -1663,43 +1218,12 @@ class ApiController extends Controller
      */
     public function getCategoryIdFromEbay($categoryName)
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/commerce/taxonomy/v1/category_tree/0/get_category_suggestions?q=" . $categoryName);
-
-        //return $response->successful() ? $response->json() : null;
-        if ($response->successful()) {
-            return $response->json()->categorySuggestions[0]->category->categoryId;
-        } else {
-            return response()->json([
-                'error' => 'Failed to fetch category',
-                'message' => $response->body(),
-            ], $response->status());
-        }
-        //return $response->successful() ? $response->json()->categorySuggestions[0]->category->categoryId : null;
+        return $this->ebayService->getCategoryIdFromEbayService($categoryName);
     }
 
     private function getBigCommerceProductImages($productId)
     {
-        $url = $this->baseUrl . '/catalog/products/' . $productId . '/images';
-
-        $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
-
-        if ($response->successful()) {
-            //return response()->json($response->json()['data']);
-            $data = $response->json()['data'];
-            $imageArr = [];
-            foreach ($data as $k => $v) {
-                $imageArr[] = $v['url_standard'];
-            }
-            return $imageArr;
-        } else {
-            return response()->json([
-                'error' => 'Failed to fetch products',
-                'message' => $response->body(),
-            ], $response->status());
-        }
+        return $this->ebayService->getBigCommerceProductImagesService($productId);
     }
 
     /**
@@ -1732,13 +1256,7 @@ class ApiController extends Controller
      */
     private function readStoredToken()
     {
-        if (!Storage::exists($this->tokenFile)) {
-            return null;
-        }
-
-        $tokenData = json_decode(Storage::get($this->tokenFile), true);
-
-        return $tokenData ?: null;
+        return $this->ebayService->readStoredTokenService();
     }
 
     /**
@@ -1746,7 +1264,7 @@ class ApiController extends Controller
      */
     private function isTokenExpired($tokenData)
     {
-        return !isset($tokenData['expires_at']) || time() >= $tokenData['expires_at'];
+        return $this->ebayService->isTokenExpiredService($tokenData);
     }
 
     /**
@@ -1754,7 +1272,7 @@ class ApiController extends Controller
      */
     private function storeToken($tokenData)
     {
-        Storage::put($this->tokenFile, json_encode($tokenData));
+        return $this->ebayService->storeTokenService($tokenData);
     }
 
     public function getSKUByWebhook(Request $request)
@@ -1824,46 +1342,17 @@ class ApiController extends Controller
 
     public function removeSkuFromJSONFile($sku)
     {
-        Log::info('now at removeSkuFromJSONFile()');
-        $filePath = 'big-commerce-sku.json';
+        return $this->ebayService->removeSkuFromJSONFileService($sku);
+    }
 
-        if (!Storage::exists($filePath)) {
-            Log::info('file not exists $filePath ::'.$filePath);
-            //return response()->json(['message' => 'File not found.'], 404);
-            return Redirect::back()->withErrors(['msg' => 'File not found.']);
-        }
-
-        $jsonData = json_decode(Storage::get($filePath), true);
-        if (!is_array($jsonData)) {
-            //return response()->json(['message' => 'Invalid file content.'], 400);
-            return Redirect::back()->withErrors(['msg' => 'Invalid file content.']);
-
-        }
-
-        $jsonData = array_filter($jsonData, function ($item) use ($sku) {
-            return $item !== $sku;
-        });
-
-        Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
-
-        //return response()->json(['message' => 'SKU removed successfully', 'data' => $jsonData]);
-        return redirect('/bigcommerce/show-bc-sku')->with(['msg' => 'SKU removed successfully.']);
+    public function removeSkuFromJSONFileWeb($sku)
+    {
+        return $this->ebayService->removeSkuFromJSONFileWebService($sku);
     }
 
     public function showSkuFromJSONFile()
     {
-        $filePath = 'big-commerce-sku.json';
-
-        if (!Storage::exists($filePath)) {
-            return view('sku_list', ['skus' => []]);
-        }
-
-        $jsonData = json_decode(Storage::get($filePath), true);
-        if (!is_array($jsonData)) {
-            $jsonData = [];
-        }
-
-        return view('sku_list', ['skus' => $jsonData]);
+        return $this->ebayService->showSkuFromJSONFileService();
     }
 
     /**
@@ -1871,24 +1360,6 @@ class ApiController extends Controller
      */
     private function refreshUserToken($refreshToken)
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
-            'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
-            'grant_type'    => 'refresh_token',
-            'refresh_token' => $refreshToken,
-            'scope'         => $this->scopes
-        ]);
-
-        if ($response->successful()) {
-            $data = $response->json();
-            return [
-                'access_token'  => $data['access_token'],
-                'refresh_token' => $data['refresh_token'] ?? null,
-                'expires_at'    => time() + $data['expires_in']
-            ];
-        }
-
-        return null;
+        return $this->ebayService->refreshUserTokenService($refreshToken);
     }
 }

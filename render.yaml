@@ -1,0 +1,92 @@
+services:
+  - name: BigCommerce-to-eBay-Laravel-App
+    type: web
+    runtime: docker
+    repo: https://github.com/calashockJS/bigcommer2ebay.git
+    plan: free
+    envVars:
+      - key: APP_ENV
+        value: local
+      - key: APP_KEY
+        sync: false
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://bigcommer2ebay.onrender.com
+      - key: BASE_URL
+        value: https://bigcommer2ebay.onrender.com
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: debug
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: CACHE_DRIVER
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: 120
+      - key: EBAY_SCOPE_SANDBOX
+        value: https://api.ebay.com/oauth/api_scope/sell.inventory
+      - key: EBAY_SCOPE
+        value: https://api.ebay.com/oauth/api_scope/sell.inventory
+      - key: EBAY_CLIENT_ID
+        value: LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6
+      - key: EBAY_CLIENT_SECREATE
+        value: SBX-66ebbc6cebcd-6d64-488c-9289-6ad5
+      - key: EBAY_ENV_TYPE
+        value: .sandbox.
+      - key: EBAY_REDIRECT_URI
+        value: https://bigcommer2ebay.onrender.com/api/ebay/callback
+      - key: BC_WEBHOOK_SECURITY_KEY
+        value: dasc23c3-ca45v8v9-90asds
+      - key: EBAY_SANDBOX_CLIENT_ID
+        value: LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6
+      - key: EBAY_SANDBOX_CLIENT_SECRET
+        value: SBX-66ebbc6cebcd-6d64-488c-9289-6ad5
+      - key: EBAY_SANDBOX_REDIRECT_URI
+        value: https://bigcommer2ebay.onrender.com/api/ebay/callback
+      - key: EBAY_USERNAME
+        value: testuser_judhisahoo
+      - key: EBAY_PASSWORD
+        value: Jswecom*312#
+      - key: APP_DEBUG
+        value: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromService: postgres-db
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        fromService: postgres-db
+      - key: DB_USERNAME
+        fromService: postgres-db
+      - key: DB_PASSWORD
+        fromService: postgres-db
+    disk:
+      name: storage
+      mountPath: /var/www/html/storage
+      sizeGB: 1
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      php artisan migrate --force
+    startCommand: |
+      php artisan config:cache
+      php artisan route:cache
+
+  - name: postgres-db
+    type: psql
+    plan: free
+    envVars:
+      - key: POSTGRES_DB
+        value: bc2ebay
+      - key: POSTGRES_USER
+        value: bc2ebay
+      - key: POSTGRES_PASSWORD
+        value: x7eked8aJhfzIZsmZhrKQgeA8YpZ7QRj
