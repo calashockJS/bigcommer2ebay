@@ -39,7 +39,7 @@ class ApiController extends Controller
     public function __construct(Request $request)
     {
         $this->middleware(EbayAuthMiddleware::class);
-        
+
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
@@ -255,12 +255,11 @@ class ApiController extends Controller
         }
     }
 
-    public function getSyncProducts(Request $request){
-        Log::channel('stderr')->info('now in getSyncProducts()');
-        Log::channel('stderr')->info( 'going to in readStoredToken()');
-        $storedToken = $this->readStoredToken();
-        Log::channel('stderr')->info('$storedToken ::'.json_encode($storedToken));
-        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
+    public function getSyncProducts(){
+        $bcProducts = $this->getProducts();
+        foreach($bcProducts AS $k=>$v){
+            $this->createEbayProductWithBCSkuWeb($v['sku']);
+        }
     }
 
     /**
@@ -310,7 +309,7 @@ class ApiController extends Controller
      *     @OA\Response(response=500, description="Server error")
      * )
      */
-    public function createEbayProductWithBCSku($bcsku,Request $request)
+    public function createEbayProductWithBCSku($bcsku)
     {
         // Get the product list
         $product = $this->getBigCommerceProductDetailsBySKU($bcsku);
@@ -446,7 +445,7 @@ class ApiController extends Controller
      *     @OA\Response(response=500, description="Server error")
      * )
      */
-    public function createEbayProductWithBCSkuWeb($bcsku,Request $request)
+    public function createEbayProductWithBCSkuWeb($bcsku)
     {
         if($this->accessToken==''){
             return Redirect::back()->withErrors(['msg' => 'Please generate the ebay access token using AUTH  button at rop right corner.']);

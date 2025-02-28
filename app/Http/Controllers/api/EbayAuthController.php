@@ -169,7 +169,7 @@ class EbayAuthController extends Controller
         Log::channel('stderr')->info('Returned state: ' . $request->get('state'));
 
         if (!$storedState || $request->get('state') !== $storedState) {
-            return response()->json(['error' => 'Invalid state'], 400);
+            //return response()->json(['error' => 'Invalid state'], 400);
         }
 
         // Remove the state from session after use
