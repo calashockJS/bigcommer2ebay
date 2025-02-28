@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use App\Models\AccessToken;
+
 
 class EbayAuthController extends Controller
 {
@@ -207,11 +209,14 @@ class EbayAuthController extends Controller
         Log::channel('stderr')->info( 'now got $response ::'.json_encode($response->json()));
         if ($response->successful()) {
             $data = $response->json();
-            return [
+
+            $returnData = [
                 'access_token'  => $data['access_token'],
                 'refresh_token' => $data['refresh_token'] ?? null,
                 'expires_at'    => time() + $data['expires_in']
             ];
+            AccessToken::create($returnData);
+            return $returnData;
             //return $response->json();
         }
 
@@ -305,11 +310,13 @@ class EbayAuthController extends Controller
 
         if ($response->successful()) {
             $data = $response->json();
-            return [
+            $returnData = [
                 'access_token'  => $data['access_token'],
                 'refresh_token' => $data['refresh_token'] ?? null,
                 'expires_at'    => time() + $data['expires_in']
             ];
+            AccessToken::where('id',1)->update($returnData);
+            return $returnData;
         }
 
         return null;

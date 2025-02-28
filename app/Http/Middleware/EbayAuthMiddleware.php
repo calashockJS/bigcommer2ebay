@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AccessToken;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,8 +59,11 @@ class EbayAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        Log::channel('stderr')->info('now in EbayAuthMiddleware CLASS here in handle()');
+        Log::channel('stderr')->info('goingg to call getUpdateAccessToken() in EbayAuthMiddleware CLASS');
         $ebayAccessToken = $this->getUpdateAccessToken();
         if (empty($ebayAccessToken)) {
+            Log::channel('stderr')->info('goingg to redirect /api/ebay/auth url to get token');
             return redirect('/api/ebay/auth'); // Redirect if no token
         }
         return $next($request);
@@ -92,7 +96,30 @@ class EbayAuthMiddleware
         
         //echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
-            Log::channel('stderr')->info( 'now in constructure $ebayAccessToken::'.$ebayAccessToken);
+            Log::channel('stderr')->info('now in constructure $ebayAccessToken::'.$ebayAccessToken);
+        }
+
+        if($ebayAccessToken == ''){
+            Log::channel('stderr')->info('now checking token in DB');
+            $tokenData = AccessToken::find(1);
+            Log::channel('stderr')->info('$tokenData from DB ::'.json_encode($storedToken));
+            if(!$this->isTokenExpired1($tokenData->expires_at)){
+                $ebayAccessToken = $tokenData['access_token'];
+                Log::channel('stderr')->info(' token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
+            }else if ($tokenData && isset($tokenData->refresh_token)) {
+                Log::channel('stderr')->info('token expired. so going to call refresh token');
+                Log::channel('stderr')->info('going to call refreshUserToken()');
+                // Try to refresh token if exists
+                $newToken = $this->refreshUserToken($storedToken['refresh_token']);
+                Log::channel('stderr')->info('$newToken ::'.json_encode($newToken));
+                if ($newToken) {
+                    Log::channel('stderr')->info(' calling storeToken()');
+                    $this->storeToken($newToken);
+                    $ebayAccessToken = $newToken['access_token'];
+                    Log::channel('stderr')->info('token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                } 
+            }
+            Log::channel('stderr')->info('checking token in DB End Here');
         }
         return $ebayAccessToken;
     }
@@ -117,6 +144,11 @@ class EbayAuthMiddleware
     private function isTokenExpired($tokenData)
     {
         return !isset($tokenData['expires_at']) || time() >= $tokenData['expires_at'];
+    }
+
+    private function isTokenExpired1($expires_at)
+    {
+        return !isset($expires_at) || time() >= $expires_at;
     }
 
     /**
