@@ -35,7 +35,7 @@ class EbaySyncService
 
     public function __construct(Request $request)
     {
-        Log::channel('stderr')->info('now in EbaySyncService consutructur method.');
+        Log::channel('stderr')->info('now in EbaySyncService  consutructur method.');
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
@@ -57,20 +57,20 @@ class EbaySyncService
         }else{
             $this->tokenFile = 'ebay_user_token.txt';
         }
-        Log::channel('stderr')->info('now in constructure');
+        Log::channel('stderr')->info('now in EbaySyncService now in constructure');
         $ebayAccessToken = $request->accessToken;
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        Log::channel('stderr')->info('now calling getUpdateAccessToken()');
+        Log::channel('stderr')->info('now in EbaySyncService now calling getUpdateAccessToken()');
         $ebayAccessToken = $this->getUpdateAccessTokenService($ebayAccessToken);
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         $this->accessToken = $ebayAccessToken;
-        Log::channel('stderr')->info('now at end of  EbaySyncService consutructur method :: $this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('now in EbaySyncService now at end of  EbaySyncService consutructur method :: $this->accessToken ::'.$this->accessToken);
     }
 
     public function syncProductToEbay($sku)
     {
-        Log::channel('stderr')->info('now at EbaySyncService class syncProductToEbay() with '.$sku);
-        Log::channel('stderr')->info('now at EbaySyncService class going to call createEbayProductWithBCSkuService()');
+        Log::channel('stderr')->info('now in EbaySyncService  syncProductToEbay() with '.$sku);
+        Log::channel('stderr')->info('now in EbaySyncService  going to call createEbayProductWithBCSkuService()');
         // Your eBay sync logic here
         $this->createEbayProductWithBCSkuService($sku);
 
@@ -80,6 +80,7 @@ class EbaySyncService
 
     public function getBigCommerceProductDetailsBySKUService($sku)
     {
+        Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsBySKUService()');
         $url = $this->baseUrl . '/catalog/products?sku=' . $sku;
         
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -96,12 +97,12 @@ class EbaySyncService
 
     public function createEbayProductWithBCSkuService($bcsku)
     {
-        Log::channel('stderr')->info('now at EbaySyncService class == createEbayProductWithBCSkuService()');
-        Log::channel('stderr')->info('now at EbaySyncService class going to call getBigCommerceProductDetailsBySKUService()');
+        Log::channel('stderr')->info('now in EbaySyncService  == createEbayProductWithBCSkuService()');
+        Log::channel('stderr')->info('now in EbaySyncService  going to call getBigCommerceProductDetailsBySKUService()');
         // Get the product list
         $product = $this->getBigCommerceProductDetailsBySKUService($bcsku);
-        Log::channel('stderr')->info('now at EbaySyncService class get big commerce produc details with '.$bcsku.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
-        Log::channel('stderr')->info('die');
+        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcsku.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
+        Log::channel('stderr')->info('now in EbaySyncService die');
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
         }
@@ -171,7 +172,7 @@ class EbaySyncService
         ];
         // Debugging JSON payload before sending
         $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::info("inventory craete or update Request Payload: " . $productJson);
+        Log::channel('stderr')->info("inventory craete or update Request Payload: " . $productJson);
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer $this->accessToken",
@@ -181,17 +182,17 @@ class EbaySyncService
 
         //echo '<pre>';print_r($response->json());die;
         if ($response->successful()) {
-            Log::info("Success Request Payload: ", [$response->json()]);
+            Log::channel('stderr')->info("Success Request Payload: ", [$response->json()]);
             $responses[] = [
                 'sku' => $sku,
                 'status' => $response->status(),
                 'response' => $response->json()
             ];
-            Log::info("going to call createOrRePlaceOffer() with ::$sku");
+            Log::channel('stderr')->info("going to call createOrRePlaceOffer() with ::$sku");
             $this->createOrRePlaceOfferService($sku);
         } else {
-            Log::info($ebayApiUrl . $sku . ' == failed');
-            Log::info("create inventory fail response info: ", [$response->json()]);
+            Log::channel('stderr')->info($ebayApiUrl . $sku . ' == failed');
+            Log::channel('stderr')->info("create inventory fail response info: ", [$response->json()]);
         }
         return response()->json([
             //'message' => 'eBay inventory items created successfully',
@@ -221,32 +222,32 @@ class EbaySyncService
 
     public function createOrRePlaceOfferService($sku)
     {
-        Log::info("checking offer details to related to $sku");
+        Log::channel('stderr')->info("checking offer details to related to $sku");
         //now to check sku has offer Or Not
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$this->accessToken}",
             'Content-Type' => 'application/json',
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
 
-        Log::info("response for checking $sku for offer details ::", [$response->json()]);
+        Log::channel('stderr')->info("response for checking $sku for offer details ::", [$response->json()]);
 
         $offerIdNumber = false;
         $offerId = '';
         if ($response->successful()) {
-            Log::info('find offer and checking is published ot not');
+            Log::channel('stderr')->info('now in EbaySyncService find offer and checking is published ot not');
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
                 Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
                 $this->publishEbayOfferService($offerInfo['offerId'],$sku);
             } else {
-                Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
+                Log::channel('stderr')->info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
         } else {
-            Log::info("Going to create new offer for $sku");
+            Log::channel('stderr')->info("Going to create new offer for $sku");
             $offerIdResponse = $this->createOfferService($sku);
-            Log::info("offer created response ::", [$offerIdResponse]);
+            Log::channel('stderr')->info("offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
-                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
+                Log::channel('stderr')->info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
                 $this->publishEbayOfferService($offerIdResponse['offerId'],$sku);
             }
         }
@@ -271,10 +272,10 @@ class EbaySyncService
 
     public function createOfferService($sku)
     {
-        Log::channel('stderr')->info('now in createOffer()');
+        Log::channel('stderr')->info('now in EbaySyncService now in createOffer()');
         $validatedData = [];
         $validatedData['sku'] = $sku;
-        Log::channel('stderr')->info('now calling getBigCommerceProductDetailsBySKU() with $sku::'.$sku);
+        Log::channel('stderr')->info('now in EbaySyncService now calling getBigCommerceProductDetailsBySKU() with $sku::'.$sku);
         $productData = $this->getBigCommerceProductDetailsBySKUService($sku);
         $price = $productData['price'];
         $validatedData['price'] = $price;
@@ -284,7 +285,7 @@ class EbaySyncService
 
         // 1. Fetch Inventory Item Data
         $inventoryData = $this->getInventoryItemOneService($validatedData['sku']);
-        Log::channel('stderr')->info('$inventoryData ::',[$inventoryData]);
+        Log::channel('stderr')->info('now in EbaySyncService $inventoryData ::',[$inventoryData]);
         if (!$inventoryData) {
             return response()->json(['error' => 'Inventory item not found'], 404);
         }
@@ -297,16 +298,16 @@ class EbaySyncService
         // 2. Fetch Required eBay Data
         $marketplaceId = 'EBAY_US'; // Set marketplace ID manually for now  'EBAY_US'; 
         $fulfillmentPolicyId = $this->getFulfillmentPolicyService($marketplaceId);
-        Log::channel('stderr')->info('$fulfillmentPolicyId ::'.$fulfillmentPolicyId);
+        Log::channel('stderr')->info('now in EbaySyncService $fulfillmentPolicyId ::'.$fulfillmentPolicyId);
         $paymentPolicyId = ($this->ebayEnvType == '.sandbox.') ? $this->getPaymentPolicyService($marketplaceId) : "264239928014";
-        Log::channel('stderr')->info('$paymentPolicyId ::'.$paymentPolicyId);
+        Log::channel('stderr')->info('now in EbaySyncService $paymentPolicyId ::'.$paymentPolicyId);
         $returnPolicyId = $this->getReturnPolicyService($marketplaceId);
-        Log::channel('stderr')->info('$returnPolicyId ::'.$returnPolicyId);
+        Log::channel('stderr')->info('now in EbaySyncService $returnPolicyId ::'.$returnPolicyId);
         $categoryId = "182189"; // Replace with actual category retrieval logic
         $currency = "USD";
         //$categoryId =  $categoryData->
         $merchantLocationKey = $this->getMerchantLocationService();
-        Log::channel('stderr')->info('$merchantLocationKey ::'.$merchantLocationKey);
+        Log::channel('stderr')->info('now in EbaySyncService $merchantLocationKey ::'.$merchantLocationKey);
         //$merchantLocationKey = 'default-location';
         //echo '$fulfillmentPolicyId :: '.$fulfillmentPolicyId.' == $paymentPolicyId ::'.$paymentPolicyId.' == $returnPolicyId ::'.$returnPolicyId.' == $merchantLocationKey ::'.$merchantLocationKey;die;
 
@@ -458,10 +459,10 @@ class EbaySyncService
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/{$sku}");
 
         if($response->successful()){ 
-            Log::channel('stderr')->info('get details of inventoryr item with $sku ::'.$sku,[$response->json()]);
+            Log::channel('stderr')->info('now in EbaySyncService get details of inventoryr item with $sku ::'.$sku,[$response->json()]);
             return $response->json();
          }else{
-            Log::channel('stderr')->info('fail to get details of inventoryr item with $sku ::'.$sku);
+            Log::channel('stderr')->info('now in EbaySyncService fail to get details of inventoryr item with $sku ::'.$sku);
             return null;
          } 
     }
@@ -576,7 +577,7 @@ class EbaySyncService
     }
 
     public function getUpdateAccessTokenService($ebayAccessToken=''){
-        Log::channel('stderr')->info('now in getUpdateAccessToken');
+        Log::channel('stderr')->info('now in EbaySyncService now in getUpdateAccessToken');
         if ($ebayAccessToken == '') {
             Log::channel('stderr')->info( 'now going to calling readStoredToken()');
             // Check if we already have a valid token
@@ -584,18 +585,18 @@ class EbaySyncService
             Log::channel('stderr')->info( '$storedToken ::'.json_encode($storedToken));
             if ($storedToken && !$this->isTokenExpiredService($storedToken)) {
                 $ebayAccessToken = $storedToken['access_token'];
-                Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                Log::channel('stderr')->info('now in EbaySyncService  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
             }else if ($storedToken && isset($storedToken['refresh_token'])) {
-                Log::channel('stderr')->info('token expired. so going to call refresh token');
+                Log::channel('stderr')->info('now in EbaySyncService token expired. so going to call refresh token');
                 Log::channel('stderr')->info( 'going to call refreshUserToken()');
                 // Try to refresh token if exists
                 $newToken = $this->isTokenExpiredService($storedToken['refresh_token']);
                 Log::channel('stderr')->info( '$newToken ::'.json_encode($newToken));
                 if ($newToken) {
-                    Log::channel('stderr')->info(' calling storeToken()');
+                    Log::channel('stderr')->info('now in EbaySyncService  calling storeToken()');
                     $this->storeTokenService($newToken);
                     $ebayAccessToken = $newToken['access_token'];
-                    Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                    Log::channel('stderr')->info('now in EbaySyncService  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                 }
             }
         }
