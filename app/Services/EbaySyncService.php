@@ -35,6 +35,7 @@ class EbaySyncService
 
     public function __construct(Request $request)
     {
+        Log::channel('stderr')->info('now in EbaySyncService consutructur method.');
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
@@ -63,10 +64,13 @@ class EbaySyncService
         $ebayAccessToken = $this->getUpdateAccessTokenService($ebayAccessToken);
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         $this->accessToken = $ebayAccessToken;
+        Log::channel('stderr')->info('now at end of  EbaySyncService consutructur method :: $this->accessToken ::'.$this->accessToken);
     }
 
     public function syncProductToEbay($sku)
     {
+        Log::channel('stderr')->info('now at EbaySyncService class syncProductToEbay() with '.$sku);
+        Log::channel('stderr')->info('now at EbaySyncService class going to call createEbayProductWithBCSkuService()');
         // Your eBay sync logic here
         $this->createEbayProductWithBCSkuService($sku);
 
@@ -92,10 +96,12 @@ class EbaySyncService
 
     public function createEbayProductWithBCSkuService($bcsku)
     {
+        Log::channel('stderr')->info('now at EbaySyncService class == createEbayProductWithBCSkuService()');
+        Log::channel('stderr')->info('now at EbaySyncService class going to call getBigCommerceProductDetailsBySKUService()');
         // Get the product list
         $product = $this->getBigCommerceProductDetailsBySKUService($bcsku);
-        //echo '<pre>';print_r($product);die;
-
+        Log::channel('stderr')->info('now at EbaySyncService class get big commerce produc details with '.$bcsku.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
+        Log::channel('stderr')->info('die');
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
         }

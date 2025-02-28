@@ -43,6 +43,7 @@ class ApiController extends Controller
     public function __construct(EbaySyncService $ebaySyncService,Request $request)
     {
         $this->middleware(EbayAuthMiddleware::class);
+        Log::channel('stderr')->info('now in ApiController class :: constructure');
         $this->ebayService = $ebaySyncService;
 
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
@@ -66,13 +67,14 @@ class ApiController extends Controller
         }else{
             $this->tokenFile = 'ebay_user_token.txt';
         }
-        Log::channel('stderr')->info('now in constructure');
+        
         $ebayAccessToken = $request->accessToken;
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         Log::channel('stderr')->info('now calling getUpdateAccessToken()');
         $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         $this->accessToken = $ebayAccessToken;
+        Log::channel('stderr')->info('now at ApiController class :: end of the constructure $this->accessToken ::'.$this->accessToken);
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
@@ -237,7 +239,7 @@ class ApiController extends Controller
      */
     public function getProducts()
     {
-        //echo '$this->accessToken ::'.$this->accessToken;die;
+        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
         $url = $this->baseUrl . '/catalog/products';
 
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -261,17 +263,19 @@ class ApiController extends Controller
     }
 
     public function getSyncProducts(){
+        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
         $bcProducts = $this->getProducts();
 
         // Start the queue worker synchronously
-        Artisan::call('queue:work', [
+        /*Artisan::call('queue:work', [
             '--queue' => 'bc2ebay-uqueue',
             '--tries' => 3,
             '--timeout' => 90
-        ]);
+        ]);*/
 
         foreach($bcProducts AS $k=>$product){
             SyncProductBigCommerce2Ebay::dispatch($product['sku']);
+            die('kk');
             //$this->createEbayProductWithBCSkuWeb($v['sku']);
         }
 
