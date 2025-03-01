@@ -139,11 +139,4 @@ databases:
   plan: free
   databaseName: bc2ebay
   user: bc2ebay
-  envVars:
-  - key: POSTGRES_DB
-    value: bc2ebay
-  - key: POSTGRES_USER
-    value: bc2ebay
-  - key: POSTGRES_PASSWORD
-    value: x7eked8aJhfzIZsmZhrKQgeA8YpZ7QRj
 version: "1"
