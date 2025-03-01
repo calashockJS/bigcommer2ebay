@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
-    # Puppeteer dependencies
+    libpq-dev \
     chromium \
     libatk-bridge2.0-0 \
     libdrm2 \
@@ -24,14 +24,12 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     libasound2 \
     libatspi2.0-0 \
-    libxshmfence1 
-    # End Puppeteer dependencies
-    #&& docker-php-ext-install pdo pdo_mysql zip \
-    #&& docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath
-# Install extensions
-RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo_pgsql
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl pdo_pgsql
+    libxshmfence1
+
+# Install required PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd
+
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
@@ -43,10 +41,10 @@ WORKDIR /var/www/html
 # Copy the entire Laravel project before running composer
 COPY . .
 
-# Install PHP dependencies
+# Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Run Composer install after ensuring all files are present
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Install Node.js dependencies including Puppeteer
