@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Str;
 
-echo config('database.default'); die('kk');
+echo env('DB_CONNECTION').' == '.env('DB_HOST').' == '.env('DB_DATABASE').' == '.env('DB_USERNAME').' == '.env('DB_PASSWORD');die('kk');
 
 return [
 

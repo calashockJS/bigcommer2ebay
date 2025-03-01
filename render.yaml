@@ -75,11 +75,13 @@ services:
       sizeGB: 1
     buildCommand: |
       composer install --no-dev --optimize-autoloader
-      php artisan migrate --force
+      #php artisan migrate --force
     startCommand: |
-      #php artisan config:cache
-      #php artisan route:cache
-      php artisan optimize:clear
+      php artisan config:clear
+      php artisan cache:clear
+      php artisan config:cache
+      php artisan route:cache
+      php artisan migrate --force
 
   - name: postgres-db
     type: psql
