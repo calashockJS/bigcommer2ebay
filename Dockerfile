@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     libxshmfence1 \
     # End Puppeteer dependencies
-    && docker-php-ext-install pdo pdo_mysql zip
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
