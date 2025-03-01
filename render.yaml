@@ -10,11 +10,11 @@ services:
       - key: APP_KEY
         sync: false
       - key: APP_DEBUG
-        value: false
+        value: true
       - key: APP_URL
-        value: https://bigcommer2ebay.onrender.com
+        sync: false
       - key: BASE_URL
-        value: https://bigcommer2ebay.onrender.com
+        sync: false
       - key: LOG_CHANNEL
         value: stack
       - key: LOG_LEVEL
@@ -42,7 +42,7 @@ services:
       - key: EBAY_ENV_TYPE
         value: .sandbox.
       - key: EBAY_REDIRECT_URI
-        value: https://bigcommer2ebay.onrender.com/api/ebay/callback
+        sync: false
       - key: BC_WEBHOOK_SECURITY_KEY
         value: dasc23c3-ca45v8v9-90asds
       - key: EBAY_SANDBOX_CLIENT_ID
@@ -50,7 +50,7 @@ services:
       - key: EBAY_SANDBOX_CLIENT_SECRET
         value: SBX-66ebbc6cebcd-6d64-488c-9289-6ad5
       - key: EBAY_SANDBOX_REDIRECT_URI
-        value: https://bigcommer2ebay.onrender.com/api/ebay/callback
+        sync: false #value: https://bigcommer2ebay.onrender.com/api/ebay/callback
       - key: EBAY_USERNAME
         value: testuser_judhisahoo
       - key: EBAY_PASSWORD
