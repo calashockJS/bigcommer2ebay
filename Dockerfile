@@ -27,7 +27,6 @@ RUN apt-get update && apt-get install -y \
     libxshmfence1 \
     # End Puppeteer dependencies
     && docker-php-ext-install pdo pdo_mysql zip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath
 
 # Install Node.js
