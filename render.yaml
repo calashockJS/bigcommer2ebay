@@ -77,8 +77,9 @@ services:
       composer install --no-dev --optimize-autoloader
       php artisan migrate --force
     startCommand: |
-      php artisan config:cache
-      php artisan route:cache
+      #php artisan config:cache
+      #php artisan route:cache
+      php artisan optimize:clear
 
   - name: postgres-db
     type: psql

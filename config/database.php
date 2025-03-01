@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Str;
 
-echo env('DB_CONNECTION');die('kk');
+echo config('database.default'); die('kk');
 
 return [
 
