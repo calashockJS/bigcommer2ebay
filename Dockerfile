@@ -24,11 +24,14 @@ RUN apt-get update && apt-get install -y \
     libgbm1 \
     libasound2 \
     libatspi2.0-0 \
-    libxshmfence1 \
+    libxshmfence1 
     # End Puppeteer dependencies
-    && docker-php-ext-install pdo pdo_mysql zip \
-    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath
-
+    #&& docker-php-ext-install pdo pdo_mysql zip \
+    #&& docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath
+# Install extensions
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo_pgsql
+RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl pdo_pgsql
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
