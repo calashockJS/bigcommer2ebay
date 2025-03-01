@@ -1,6 +1,6 @@
 FROM php:8.1-fpm
 
-# Install system dependencies for PHP, Node.js, and Puppeteer
+# Install system dependencies for PHP, Node.js, PostgreSQL, and Puppeteer
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     unzip \
@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    # PostgreSQL dependencies
+    libpq-dev \
+    postgresql-client \
     # Puppeteer dependencies
     chromium \
     libatk-bridge2.0-0 \
@@ -26,9 +29,14 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     libxshmfence1 \
     # End Puppeteer dependencies
-    && docker-php-ext-install pdo pdo_mysql zip
+    && docker-php-ext-install pdo pdo_mysql zip \
+    # Install and configure PostgreSQL extension
+    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
+    && docker-php-ext-install pgsql pdo_pgsql
 
-RUN docker-php-ext-configure pdo_pgsql
+# Tell Puppeteer to skip downloading Chrome (we installed Chromium via apt)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
