@@ -106,30 +106,16 @@ services:
     fromDatabase:
       name: postgres-db
       property: connectionString
-  #- key: DB_HOST
-  #  value: dpg-cv0br2qj1k6c738fhaeg-a
-  #- key: DB_PORT
-  #  value: 5432
-  #- key: DB_DATABASE
-
-  #- key: DB_USERNAME
-  #  fromDatabase:
-  #    name: postgres-db
-  #    envVarKey: POSTGRES_USER
-  #- key: DB_PASSWORD
-  #  fromDatabase:
-  #    name: postgres-db
-  #    envVarKey: POSTGRES_PASSWORD
-  disk:
-    name: storage
-    mountPath: /var/www/html/storage
-    sizeGB: 1
-  startCommand: |
-    php artisan config:clear
-    php artisan cache:clear
-    php artisan config:cache
-    php artisan route:cache
-    php artisan migrate --force
+  #disk:
+  #  name: storage
+  #  mountPath: /var/www/html/storage
+  #  sizeGB: 1
+  #startCommand: |
+  #  php artisan config:clear
+  #  php artisan cache:clear
+  #  php artisan config:cache
+  #  php artisan route:cache
+  #  php artisan migrate --force
   region: oregon
   dockerContext: .
   dockerfilePath: ./Dockerfile
