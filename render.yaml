@@ -126,7 +126,7 @@ services:
   dockerContext: .
   dockerfilePath: ./Dockerfile
 - name: postgres-db
-  type: psql
+  type: pgsql
   plan: free
   envVars:
   - key: POSTGRES_DB
