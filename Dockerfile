@@ -69,5 +69,5 @@ CMD php artisan config:clear && \
     php artisan cache:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
-    php artisan migrate --force
-    #php -S 0.0.0.0:8080 -t public
+    php artisan migrate --force && \
+    php -S 0.0.0.0:80 -t public
