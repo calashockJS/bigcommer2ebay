@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y \
     # End Puppeteer dependencies
     && docker-php-ext-install pdo pdo_mysql zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
+    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
