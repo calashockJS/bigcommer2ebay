@@ -103,15 +103,21 @@ services:
   - key: DB_CONNECTION
     value: pgsql
   - key: DB_HOST
-    fromService: postgres-db
+    value: dpg-cv0br2qj1k6c738fhaeg-a
   - key: DB_PORT
     value: 5432
   - key: DB_DATABASE
-    fromService: postgres-db
+    fromDatabase:
+      name: postgres-db
+      envVarKey: POSTGRES_DB
   - key: DB_USERNAME
-    fromService: postgres-db
+    fromDatabase:
+      name: postgres-db
+      envVarKey: POSTGRES_USER
   - key: DB_PASSWORD
-    fromService: postgres-db
+    fromDatabase:
+      name: postgres-db
+      envVarKey: POSTGRES_PASSWORD
   disk:
     name: storage
     mountPath: /var/www/html/storage
@@ -125,9 +131,12 @@ services:
   region: oregon
   dockerContext: .
   dockerfilePath: ./Dockerfile
+databases:
 - name: postgres-db
-  type: pgsql
+  postgresMajorVersion: "16" 
   plan: free
+  databaseName: bc2ebay
+  user: bc2ebay
   envVars:
   - key: POSTGRES_DB
     value: bc2ebay
