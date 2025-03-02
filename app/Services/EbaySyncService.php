@@ -583,9 +583,9 @@ class EbaySyncService
         if ($ebayAccessToken == '') {
             $tokenData = AccessToken::find(1);
             Log::channel('stderr')->info('now in EbaySyncService $tokenData from DB ::'.json_encode($tokenData));
-            if($tokenData !== null && !$tokenData){
+            if($tokenData){
                 if(!$this->isTokenExpired1($tokenData->expires_at)){
-                    $ebayAccessToken = $tokenData['access_token'];
+                    $ebayAccessToken = $tokenData->access_token;
                     Log::channel('stderr')->info('now in EbaySyncService token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
                 }else if ($tokenData && isset($tokenData->refresh_token)) {
                     Log::channel('stderr')->info('now in EbaySyncService token expired. so going to call refresh token');
@@ -598,16 +598,19 @@ class EbaySyncService
                         Log::channel('stderr')->info('now in EbaySyncService token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                     } 
                 }
+            }else{
+                Log::channel('stderr')->info('no $tokenData in DB ');
             }
         }
 
-        Log::channel('stderr')->info( 'now in EbaySyncService at getUpdateAccessTokenService() $ebayAccessToken::'.$ebayAccessToken);
+        Log::channel('stderr')->info('now in EbaySyncService at getUpdateAccessTokenService() $ebayAccessToken::'.$ebayAccessToken);
         
         return $ebayAccessToken;
     }
 
     private function isTokenExpired1($expires_at)
     {
+        Log::channel('stderr')->info('now in EbaySyncService at isTokenExpired1() -- $expires_at ::'.$expires_at.' ==  time()::'.time());
         return !isset($expires_at) || time() >= $expires_at;
     }
 
