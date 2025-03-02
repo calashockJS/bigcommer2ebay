@@ -43,7 +43,7 @@ class ApiController extends Controller
     public function __construct(EbaySyncService $ebaySyncService,Request $request)
     {
         $this->middleware(EbayAuthMiddleware::class);
-        Log::channel('stderr')->info('now in ApiController class :: constructure');
+        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure');
         $this->ebayService = $ebaySyncService;
 
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
@@ -70,15 +70,15 @@ class ApiController extends Controller
         
         $ebayAccessToken = $request->accessToken;
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        Log::channel('stderr')->info('now calling getUpdateAccessToken()');
+        Log::channel('stderr')->info('Now at ApiController now calling getUpdateAccessToken()');
         $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
         $this->accessToken = $ebayAccessToken;
-        Log::channel('stderr')->info('now at ApiController class :: end of the constructure $this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('Now at ApiController now at ApiController class :: end of the constructure $this->accessToken ::'.$this->accessToken);
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
-        Log::channel('stderr')->info('now in getUpdateAccessToken');
+        Log::channel('stderr')->info('Now at ApiController now in getUpdateAccessToken');
         if ($ebayAccessToken == '') {
             Log::channel('stderr')->info( 'now going to calling readStoredToken()');
             // Check if we already have a valid token
@@ -86,18 +86,18 @@ class ApiController extends Controller
             Log::channel('stderr')->info( '$storedToken ::'.json_encode($storedToken));
             if ($storedToken && !$this->isTokenExpired($storedToken)) {
                 $ebayAccessToken = $storedToken['access_token'];
-                Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                Log::channel('stderr')->info('Now at ApiController  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
             }else if ($storedToken && isset($storedToken['refresh_token'])) {
-                Log::channel('stderr')->info('token expired. so going to call refresh token');
+                Log::channel('stderr')->info('Now at ApiController token expired. so going to call refresh token');
                 Log::channel('stderr')->info( 'going to call refreshUserToken()');
                 // Try to refresh token if exists
                 $newToken = $this->refreshUserToken($storedToken['refresh_token']);
                 Log::channel('stderr')->info( '$newToken ::'.json_encode($newToken));
                 if ($newToken) {
-                    Log::channel('stderr')->info(' calling storeToken()');
+                    Log::channel('stderr')->info('Now at ApiController  calling storeToken()');
                     $this->storeToken($newToken);
                     $ebayAccessToken = $newToken['access_token'];
-                    Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                    Log::channel('stderr')->info('Now at ApiController  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                 }
             }
         }
@@ -239,7 +239,7 @@ class ApiController extends Controller
      */
     public function getProducts()
     {
-        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('Now at ApiController $this->accessToken ::'.$this->accessToken);
         $url = $this->baseUrl . '/catalog/products';
 
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
@@ -263,12 +263,12 @@ class ApiController extends Controller
     }
 
     public function getSyncProducts(){
-        Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('Now at ApiController $this->accessToken ::'.$this->accessToken);
         $bcProducts = $this->getProducts();
-        Log::channel('stderr')->info('total product collected ::'.count($bcProducts));
-        Log::channel('stderr')->info('looping the BC product data');
+        Log::channel('stderr')->info('Now at ApiController total product collected ::'.count($bcProducts));
+        Log::channel('stderr')->info('Now at ApiController looping the BC product data');
         foreach($bcProducts AS $k=>$product){
-            Log::channel('stderr')->info('product send for sync to job ::'.json_encode($product));
+            Log::channel('stderr')->info('Now at ApiController product send for sync to job ::'.json_encode($product));
             //SyncProductBigCommerce2Ebay::dispatch($product['sku']);
             $this->createEbayProductWithBCSkuWeb($product['sku']);
         }
@@ -325,6 +325,7 @@ class ApiController extends Controller
      */
     public function createEbayProductWithBCSku($bcsku)
     {
+        Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCSku() going to call $this->ebayService->createEbayProductWithBCSkuService()');
         $returnData = $this->ebayService->createEbayProductWithBCSkuService($bcsku);
         return $returnData;
     }
@@ -367,7 +368,7 @@ class ApiController extends Controller
         if($this->accessToken==''){
             return Redirect::back()->withErrors(['msg' => 'Please generate the ebay access token using AUTH  button at rop right corner.']);
         }
-
+        Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCSkuWeb() going to call $this->ebayService->createEbayProductWithBCSkuService()');
         $returnData = $this->ebayService->createEbayProductWithBCSkuService($bcsku);
         return array('type'=>'successs','message' => $returnData['responses']);
     }
@@ -425,16 +426,16 @@ class ApiController extends Controller
         $count = 0;
         foreach ($products as $product) {
             if ($count < 5) {
-                Log::info('now $count is ::' . $count . ' is going to continue statement');
+                Log::channel('stderr')->info('Now at ApiController now $count is ::' . $count . ' is going to continue statement');
                 $count++;
                 continue;
             }
 
             if ($count > 7) {
-                Log::info('now $count is ::' . $count . ' is going to break the loop');
+                Log::channel('stderr')->info('Now at ApiController now $count is ::' . $count . ' is going to break the loop');
                 break;
             }
-            Log::info('now $count is ::' . $count . ' going to create or udpate inventory item with $sku ::' . $product['sku']);
+            Log::channel('stderr')->info('Now at ApiController now $count is ::' . $count . ' going to create or udpate inventory item with $sku ::' . $product['sku']);
             $sku = $product['sku'];
             $quantity = $product['inventory_level'];
             $quantity = ($quantity > 2) ? $quantity : 2;
@@ -494,7 +495,7 @@ class ApiController extends Controller
             ];
             // Debugging JSON payload before sending
             $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-            Log::info("inventory craete or update Request Payload: " . $productJson);
+            Log::channel('stderr')->info("Now at ApiController inventory craete or update Request Payload: " . $productJson);
 
             $response = Http::withHeaders([
                 'Authorization' => "Bearer $this->accessToken",
@@ -504,17 +505,17 @@ class ApiController extends Controller
 
             //echo '<pre>';print_r($response->json());die;
             if ($response->successful()) {
-                Log::info("Success Request Payload: ", [$response->json()]);
+                Log::channel('stderr')->info("Now at ApiController Success Request Payload: ", [$response->json()]);
                 $responses[] = [
                     'sku' => $sku,
                     'status' => $response->status(),
                     'response' => $response->json()
                 ];
-                Log::info("going to call createOrRePlaceOffer() with ::$sku");
+                Log::channel('stderr')->info("Now at ApiController going to call createOrRePlaceOffer() with ::$sku");
                 $this->createOrRePlaceOffer($sku);
             } else {
                 Log::info($ebayApiUrl . $sku . ' == failed');
-                Log::info("create inventory fail response info: ", [$response->json()]);
+                Log::channel('stderr')->info("Now at ApiController create inventory fail response info: ", [$response->json()]);
             }
 
             //return response()->json($responses);
@@ -530,40 +531,13 @@ class ApiController extends Controller
 
     private function createOrRePlaceOffer($sku)
     {
-        Log::info("checking offer details to related to $sku");
-        //now to check sku has offer Or Not
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$this->accessToken}",
-            'Content-Type' => 'application/json',
-        ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
-
-        Log::info("response for checking $sku for offer details ::", [$response->json()]);
-
-        $offerIdNumber = false;
-        $offerId = '';
-        if ($response->successful()) {
-            Log::info('find offer and checking is published ot not');
-            $offerInfo = $response->json()['offers']['0'];
-            if ($offerInfo['status'] == 'UNPUBLISHED') {
-                Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
-                $this->publishEbayOffer($offerInfo['offerId'],$sku);
-            } else {
-                Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
-            }
-        } else {
-            Log::info("Going to create new offer for $sku");
-            $offerIdResponse = $this->createOffer($sku);
-            Log::info("offer created response ::", [$offerIdResponse]);
-            if ($offerIdResponse) {
-                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
-                $this->publishEbayOffer($offerIdResponse['offerId'],$sku);
-            }
-        }
+        Log::channel('stderr')->info("Now at ApiController createOrRePlaceOffer() checking offer details to related to $sku".' an going to call $this->ebayService->createOrRePlaceOfferService($sku)');
+        return $this->ebayService->createOrRePlaceOfferService($sku);
     }
 
     private function createOrRePlaceOfferWeb($sku)
     {
-        Log::info("checking offer details to related to $sku");
+        Log::channel('stderr')->info("Now at ApiController createOrRePlaceOfferWeb() checking offer details to related to $sku");
         Log::channel('stderr')->info("checking offer details to related to $sku");
         //now to check sku has offer Or Not
         $response = Http::withHeaders([
@@ -571,34 +545,34 @@ class ApiController extends Controller
             'Content-Type' => 'application/json',
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
 
-        Log::info("response for checking $sku for offer details ::", [$response->json()]);
+        Log::channel('stderr')->info("Now at ApiController response for checking $sku for offer details ::", [$response->json()]);
         Log::channel('stderr')->info("response for checking $sku for offer details ::", [$response->json()]);
 
         $offerIdNumber = false;
         $offerId = '';
         if ($response->successful()) {
-            Log::info('find offer and checking is published ot not');
-            Log::channel('stderr')->info('find offer and checking is published ot not');
+            Log::channel('stderr')->info('Now at ApiController find offer and checking is published ot not');
+            Log::channel('stderr')->info('Now at ApiController find offer and checking is published ot not');
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
-                Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
+                Log::channel('stderr')->info("Now at ApiController going to publish the offer for $sku with " . $offerInfo['offerId']);
                 Log::channel('stderr')->info("going to publish the offer for $sku with " . $offerInfo['offerId']);
                 $getinfo = $this->publishEbayOfferWeb($offerInfo['offerId'],$sku);
                 if($getinfo['type']=='success'){
                     return redirect()->back()->with(['message'=>'Product Listed Succssfully in ebay']);
                 }
             } else {
-                Log::info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
+                Log::channel('stderr')->info("Now at ApiController offer for $sku with " . $offerInfo['offerId'] . " had already published");
                 Log::channel('stderr')->info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
         } else {
-            Log::info("Going to create new offer for $sku");
+            Log::channel('stderr')->info("Now at ApiController Going to create new offer for $sku");
             Log::channel('stderr')->info("Going to create new offer for $sku");
             $offerIdResponse = $this->createOffer($sku);
-            Log::info("offer created response ::", [$offerIdResponse]);
+            Log::channel('stderr')->info("Now at ApiController offer created response ::", [$offerIdResponse]);
             Log::channel('stderr')->info("offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
-                Log::info("Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
+                Log::channel('stderr')->info("Now at ApiController Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
                 Log::channel('stderr')->info("Now going to publish the offer :: " . $offerIdResponse['offerId'].' == $sku ::'.$sku);
                 $getinfo = $this->publishEbayOfferWeb($offerIdResponse['offerId'],$sku);
                 if($getinfo['type']=='success'){
@@ -638,7 +612,7 @@ class ApiController extends Controller
         $output = Artisan::output();
 
         // Log the output (optional)
-        Log::info("eBay Access Token Command Output: " . $output);
+        Log::channel('stderr')->info("Now at ApiController eBay Access Token Command Output: " . $output);
 
         // Check if the access token was stored
         if (Storage::exists('ebay_access_token.txt')) {
@@ -715,7 +689,7 @@ class ApiController extends Controller
         ])->get($ebayApiUrl);
 
         // Log Response
-        Log::info("eBay API Response", [$response->json()]);
+        Log::channel('stderr')->info("Now at ApiController eBay API Response", [$response->json()]);
 
         $responses[] = [
             'status' => $response->status(),
@@ -862,6 +836,7 @@ class ApiController extends Controller
      */
     public function createOffer($sku)
     {
+        Log::channel('stderr')->info('Now at ApiController createOffer() going to call $this->ebayService->createOfferService()');
         return $this->ebayService->createOfferService($sku);
     }
 
@@ -870,6 +845,7 @@ class ApiController extends Controller
      */
     private function getInventoryItemOne($sku)
     {
+        Log::channel('stderr')->info('Now at ApiController getInventoryItemOne() going to call $this->ebayService->getInventoryItemOneService()');
         return $this->ebayService->getInventoryItemOneService($sku);
     }
 
@@ -878,6 +854,7 @@ class ApiController extends Controller
      */
     private function getFulfillmentPolicy($marketplaceId)
     {
+        Log::channel('stderr')->info('Now at ApiController getFulfillmentPolicy() going to call $this->ebayService->getFulfillmentPolicyService()');
         return $this->ebayService->getFulfillmentPolicyService($marketplaceId);
     }
 
@@ -886,6 +863,7 @@ class ApiController extends Controller
      */
     private function getPaymentPolicy($marketplaceId)
     {
+        Log::channel('stderr')->info('Now at ApiController getPaymentPolicy() going to call $this->ebayService->getPaymentPolicyService()');
         return $this->ebayService->getPaymentPolicyService($marketplaceId);
     }
 
@@ -894,6 +872,7 @@ class ApiController extends Controller
      */
     private function getReturnPolicy($marketplaceId)
     {
+        Log::channel('stderr')->info('Now at ApiController getReturnPolicy() going to call $this->ebayService->getReturnPolicyService()');
         return $this->ebayService->getReturnPolicyService($marketplaceId);
     }
 
@@ -902,6 +881,7 @@ class ApiController extends Controller
      */
     private function getMerchantLocation()
     {
+        Log::channel('stderr')->info('Now at ApiController getMerchantLocation() going to call $this->ebayService->getMerchantLocationService()');
         return $this->ebayService->getMerchantLocationService();
     }
 
@@ -1060,6 +1040,7 @@ class ApiController extends Controller
      */
     public function publishEbayOffer($offerId,$sku)
     {
+        Log::channel('stderr')->info('Now at ApiController publishEbayOffer() going to call $this->ebayService->publishEbayOfferService()');
         return $this->ebayService->publishEbayOfferService($offerId,$sku);
     }
 
@@ -1104,6 +1085,7 @@ class ApiController extends Controller
      */
     public function publishEbayOfferWeb($offerId,$sku)
     {
+        Log::channel('stderr')->info('Now at ApiController publishEbayOfferWeb() going to call $this->ebayService->publishEbayOfferService()');
         $returnData = $this->ebayService->publishEbayOfferService($offerId,$sku);
         if($returnData['type']=='success'){
             $this->removeSkuFromJSONFile($sku);
@@ -1159,16 +1141,19 @@ class ApiController extends Controller
 
     private function getBigCommerceCategoryName($categoryId)
     {
+        Log::channel('stderr')->info('Now at ApiController getBigCommerceCategoryName() going to call $this->ebayService->getBigCommerceCategoryNameService()');
         return $this->ebayService->getBigCommerceCategoryNameService($categoryId);
     }
 
     private function getBigCommerceBrandName($brandId)
     {
+        Log::channel('stderr')->info('Now at ApiController getBigCommerceBrandName() going to call $this->ebayService->getBigCommerceBrandNameService()');
         return $this->ebayService->getBigCommerceBrandNameService($brandId);
     }
 
     private function getBigCommerceProductDetailsBySKU($sku)
     {
+        Log::channel('stderr')->info('Now at ApiController getBigCommerceProductDetailsBySKU() going to call $this->ebayService->getBigCommerceProductDetailsBySKUService()');
         return $this->ebayService->getBigCommerceProductDetailsBySKUService($sku);
     }
 
@@ -1214,11 +1199,13 @@ class ApiController extends Controller
      */
     public function getCategoryIdFromEbay($categoryName)
     {
+        Log::channel('stderr')->info('Now at ApiController getCategoryIdFromEbay() going to call $this->ebayService->getCategoryIdFromEbayService()');
         return $this->ebayService->getCategoryIdFromEbayService($categoryName);
     }
 
     private function getBigCommerceProductImages($productId)
     {
+        Log::channel('stderr')->info('Now at ApiController getBigCommerceProductImages() going to call $this->ebayService->getBigCommerceProductImagesService()');
         return $this->ebayService->getBigCommerceProductImagesService($productId);
     }
 
@@ -1231,7 +1218,7 @@ class ApiController extends Controller
             $baseUrl = env('BASE_URL'); // Ensure BASE_URL is set in .env
             $apiEndpoint = $baseUrl . '/api/ebay/cli-token';
             //echo '$apiEndpoint ::'.$apiEndpoint;
-            Log::info('$apiEndpoint ::'.$apiEndpoint);
+            Log::channel('stderr')->info('Now at ApiController $apiEndpoint ::'.$apiEndpoint);
 
             $response = Http::withoutVerifying()->get($apiEndpoint);
             $data = $response->json();
@@ -1252,6 +1239,7 @@ class ApiController extends Controller
      */
     private function readStoredToken()
     {
+        Log::channel('stderr')->info('Now at ApiController readStoredToken() going to call $this->ebayService->readStoredTokenService()');
         return $this->ebayService->readStoredTokenService();
     }
 
@@ -1260,6 +1248,7 @@ class ApiController extends Controller
      */
     private function isTokenExpired($tokenData)
     {
+        Log::channel('stderr')->info('Now at ApiController isTokenExpired() going to call $this->ebayService->isTokenExpiredService()');
         return $this->ebayService->isTokenExpiredService($tokenData);
     }
 
@@ -1268,6 +1257,7 @@ class ApiController extends Controller
      */
     private function storeToken($tokenData)
     {
+        Log::channel('stderr')->info('Now at ApiController storeToken() going to call $this->ebayService->storeTokenService()');
         return $this->ebayService->storeTokenService($tokenData);
     }
 
@@ -1338,16 +1328,19 @@ class ApiController extends Controller
 
     public function removeSkuFromJSONFile($sku)
     {
+        Log::channel('stderr')->info('Now at ApiController removeSkuFromJSONFile() going to call $this->ebayService->removeSkuFromJSONFileService()');
         return $this->ebayService->removeSkuFromJSONFileService($sku);
     }
 
     public function removeSkuFromJSONFileWeb($sku)
     {
+        Log::channel('stderr')->info('Now at ApiController removeSkuFromJSONFileWeb() going to call $this->ebayService->removeSkuFromJSONFileWebService()');
         return $this->ebayService->removeSkuFromJSONFileWebService($sku);
     }
 
     public function showSkuFromJSONFile()
     {
+        Log::channel('stderr')->info('Now at ApiController showSkuFromJSONFile() going to call $this->ebayService->showSkuFromJSONFileService()');
         return $this->ebayService->showSkuFromJSONFileService();
     }
 
@@ -1356,6 +1349,7 @@ class ApiController extends Controller
      */
     private function refreshUserToken($refreshToken)
     {
+        Log::channel('stderr')->info('Now at ApiController refreshUserToken() going to call $this->ebayService->refreshUserTokenService()');
         return $this->ebayService->refreshUserTokenService($refreshToken);
     }
 }

@@ -74,7 +74,7 @@ class EbaySyncService
         // Your eBay sync logic here
         $this->createEbayProductWithBCSkuService($sku);
 
-        Log::channel('stderr')->info("Syncing product to eBay: " . $sku);
+        Log::channel('stderr')->info("now in EbaySyncService Syncing product to eBay: " . $sku);
         return "Synced SKU: " . $sku;
     }
 
@@ -172,7 +172,7 @@ class EbaySyncService
         ];
         // Debugging JSON payload before sending
         $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::channel('stderr')->info("inventory craete or update Request Payload: " . $productJson);
+        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: " . $productJson);
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer $this->accessToken",
@@ -182,17 +182,17 @@ class EbaySyncService
 
         //echo '<pre>';print_r($response->json());die;
         if ($response->successful()) {
-            Log::channel('stderr')->info("Success Request Payload: ", [$response->json()]);
+            Log::channel('stderr')->info("now in EbaySyncService Success Request Payload: ", [$response->json()]);
             $responses[] = [
                 'sku' => $sku,
                 'status' => $response->status(),
                 'response' => $response->json()
             ];
-            Log::channel('stderr')->info("going to call createOrRePlaceOffer() with ::$sku");
+            Log::channel('stderr')->info("now in EbaySyncService going to call createOrRePlaceOffer() with ::$sku");
             $this->createOrRePlaceOfferService($sku);
         } else {
             Log::channel('stderr')->info($ebayApiUrl . $sku . ' == failed');
-            Log::channel('stderr')->info("create inventory fail response info: ", [$response->json()]);
+            Log::channel('stderr')->info("now in EbaySyncService create inventory fail response info: ", [$response->json()]);
         }
         return response()->json([
             //'message' => 'eBay inventory items created successfully',
@@ -222,14 +222,14 @@ class EbaySyncService
 
     public function createOrRePlaceOfferService($sku)
     {
-        Log::channel('stderr')->info("checking offer details to related to $sku");
+        Log::channel('stderr')->info("now in EbaySyncService checking offer details to related to $sku");
         //now to check sku has offer Or Not
         $response = Http::withHeaders([
             'Authorization' => "Bearer {$this->accessToken}",
             'Content-Type' => 'application/json',
         ])->get("https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/offer?sku={$sku}");
 
-        Log::channel('stderr')->info("response for checking $sku for offer details ::", [$response->json()]);
+        Log::channel('stderr')->info("now in EbaySyncService response for checking $sku for offer details ::", [$response->json()]);
 
         $offerIdNumber = false;
         $offerId = '';
@@ -237,17 +237,17 @@ class EbaySyncService
             Log::channel('stderr')->info('now in EbaySyncService find offer and checking is published ot not');
             $offerInfo = $response->json()['offers']['0'];
             if ($offerInfo['status'] == 'UNPUBLISHED') {
-                Log::info("going to publish the offer for $sku with " . $offerInfo['offerId']);
+                Log::channel('stderr')->info("now in EbaySyncService going to publish the offer for $sku with " . $offerInfo['offerId']);
                 $this->publishEbayOfferService($offerInfo['offerId'],$sku);
             } else {
-                Log::channel('stderr')->info("offer for $sku with " . $offerInfo['offerId'] . " had already published");
+                Log::channel('stderr')->info("now in EbaySyncService offer for $sku with " . $offerInfo['offerId'] . " had already published");
             }
         } else {
-            Log::channel('stderr')->info("Going to create new offer for $sku");
+            Log::channel('stderr')->info("now in EbaySyncService Going to create new offer for $sku");
             $offerIdResponse = $this->createOfferService($sku);
-            Log::channel('stderr')->info("offer created response ::", [$offerIdResponse]);
+            Log::channel('stderr')->info("now in EbaySyncService offer created response ::", [$offerIdResponse]);
             if ($offerIdResponse) {
-                Log::channel('stderr')->info("Now going to publish the offer :: " . $offerIdResponse['offerId']);
+                Log::channel('stderr')->info("now in EbaySyncService Now going to publish the offer :: " . $offerIdResponse['offerId']);
                 $this->publishEbayOfferService($offerIdResponse['offerId'],$sku);
             }
         }
@@ -379,7 +379,7 @@ class EbaySyncService
         ];
 
         //echo json_encode($offerData);die;
-        Log::channel('stderr')->info("data to craete offer ::", [$offerData]);
+        Log::channel('stderr')->info("now in EbaySyncService data to craete offer ::", [$offerData]);
 
         // 4. Make Offer API Call
         $response = Http::withHeaders([
@@ -387,8 +387,8 @@ class EbaySyncService
             'Content-Type' => 'application/json',
             'Content-Language' => 'en-US'
         ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer', $offerData);
-        Log::channel('stderr')->info("offer created successfully ::", [$response->json()]);
-        Log::channel('stderr')->info("offer created successfully with offer id::" . $response->json()['offerId'], [$response->json()]);
+        Log::channel('stderr')->info("now in EbaySyncService offer created successfully ::", [$response->json()]);
+        Log::channel('stderr')->info("now in EbaySyncService offer created successfully with offer id::" . $response->json()['offerId'], [$response->json()]);
         return ($response->successful()) ? $response->json() : false;
     }
 
@@ -469,6 +469,7 @@ class EbaySyncService
 
     public function publishEbayOfferService($offerId,$sku)
     {
+        Log::channel('stderr')->info("now in EbaySyncService now at publishEbayOfferService()");
         /*$validatedData = $request->validate([
             'offerId' => 'required|string'
         ]);
@@ -481,7 +482,7 @@ class EbaySyncService
             'Content-Language' => 'en-US'
         ])->post('https://api' . $this->ebayEnvType . 'ebay.com/sell/inventory/v1/offer/' . $offerId . '/publish');
 
-        Log::info('response ::', [$response->json()]);
+        Log::channel('stderr')->info('now in EbaySyncService get Ebay Offer publish response ::', [$response->json()]);
         if($response->successful()){
             $this->removeSkuFromJSONFileService($sku);
             return response()->json(['type'=>'sucess','data'=>$response->json(), 'status'=>$response->status()]);

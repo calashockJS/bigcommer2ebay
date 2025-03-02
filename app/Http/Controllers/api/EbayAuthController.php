@@ -167,8 +167,8 @@ class EbayAuthController extends Controller
         $storedState = session('ebay_oauth_state');
 
         // Debugging: Log the stored and returned state values
-        Log::channel('stderr')->info('Stored state: ' . $storedState);
-        Log::channel('stderr')->info('Returned state: ' . $request->get('state'));
+        Log::channel('stderr')->info('Now at EbayAuthController  Stored state: ' . $storedState);
+        Log::channel('stderr')->info('Now at EbayAuthController  Returned state: ' . $request->get('state'));
 
         if (!$storedState || $request->get('state') !== $storedState) {
             //return response()->json(['error' => 'Invalid state'], 400);
@@ -197,7 +197,7 @@ class EbayAuthController extends Controller
      */
     private function exchangeCodeForToken($code)
     {
-        Log::channel('stderr')->info( 'now at exchangeCodeForToken()');
+        Log::channel('stderr')->info('Now at EbayAuthController   now at exchangeCodeForToken()');
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
             'Content-Type'  => 'application/x-www-form-urlencoded'
@@ -206,7 +206,7 @@ class EbayAuthController extends Controller
             'code'         => $code,
             'redirect_uri' => $this->redirectUri,
         ]);
-        Log::channel('stderr')->info( 'now got $response ::'.json_encode($response->json()));
+        Log::channel('stderr')->info('Now at EbayAuthController  now got $response ::'.json_encode($response->json()));
         if ($response->successful()) {
             $data = $response->json();
 
@@ -264,7 +264,7 @@ class EbayAuthController extends Controller
     private function automateEbayLogin()
     {
         $response = Http::get(url('/api/ebay/auth'));
-        Log::channel('stderr')->info('Automated login triggered.', ['response' => $response->json()]);
+        Log::channel('stderr')->info('Now at EbayAuthController  Automated login triggered.', ['response' => $response->json()]);
     }
 
     /**
@@ -280,7 +280,7 @@ class EbayAuthController extends Controller
             'scope'      => $this->scopes
         ]);
 
-        Log::channel('stderr')->info('fetchNewAppToken ::',[$response->json()]);
+        Log::channel('stderr')->info('Now at EbayAuthController  fetchNewAppToken ::',[$response->json()]);
 
         if ($response->successful()) {
             $data = $response->json();
@@ -354,19 +354,19 @@ class EbayAuthController extends Controller
 
     public function automatedEbayLogin()
     {
-        Log::channel('stderr')->info( 'now at automatedEbayLogin() and going to call  getAuthorizationCode()');
+        Log::channel('stderr')->info('Now at EbayAuthController  now at automatedEbayLogin() and going to call  getAuthorizationCode()');
         $authorizationCode = $this->getAuthorizationCode();
-        Log::channel('stderr')->info('now got $authorizationCode ::'.$authorizationCode);
+        Log::channel('stderr')->info('Now at EbayAuthController  now got $authorizationCode ::'.$authorizationCode);
         if (!$authorizationCode) {
-            Log::channel('stderr')->info('echo no...Failed to get authorization code');
-            Log::channel('stderr')->info('Failed to get authorization code');
+            Log::channel('stderr')->info('Now at EbayAuthController  echo no...Failed to get authorization code');
+            Log::channel('stderr')->info('Now at EbayAuthController  Failed to get authorization code');
             return response()->json(['error' => 'Failed to get authorization code'], 401);
         }
-        Log::channel('stderr')->info('now going to call exchangeCodeForToken()::');
+        Log::channel('stderr')->info('Now at EbayAuthController  now going to call exchangeCodeForToken()::');
         $accessToken = $this->exchangeCodeForToken($authorizationCode);
-        Log::channel('stderr')->info('now got $accessToken ::'.json_encode($authorizationCode));
+        Log::channel('stderr')->info('Now at EbayAuthController  now got $accessToken ::'.json_encode($authorizationCode));
         if ($accessToken) {
-            Log::channel('stderr')->info('now going to stora token and return access token ::'.$accessToken['access_token']);
+            Log::channel('stderr')->info('Now at EbayAuthController  now going to stora token and return access token ::'.$accessToken['access_token']);
             $this->storeToken($accessToken);
             return response()->json(['access_token' => $accessToken['access_token']]);
         }
@@ -380,7 +380,7 @@ class EbayAuthController extends Controller
         $authUrl = "https://auth".$this->ebayEnvType."ebay.com/oauth2/authorize?client_id={$this->clientId}&redirect_uri=" . urlencode($this->redirectUri) . "&response_type=code&scope=" . urlencode($this->scopes);
 
         $response = Http::withBasicAuth($this->ebayUsername, $this->ebayPassword)->get($authUrl);
-        Log::channel('stderr')->info( '$response :: '.json_encode($response));
+        Log::channel('stderr')->info('Now at EbayAuthController  $response :: '.json_encode($response));
         if ($response->successful() && isset($response['code'])) {
             return $response['code'];
         }

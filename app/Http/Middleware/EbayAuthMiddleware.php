@@ -60,10 +60,10 @@ class EbayAuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         Log::channel('stderr')->info('now in EbayAuthMiddleware CLASS here in handle()');
-        Log::channel('stderr')->info('goingg to call getUpdateAccessToken() in EbayAuthMiddleware CLASS');
+        Log::channel('stderr')->info('now in EbayAuthMiddleware goingg to call getUpdateAccessToken() in EbayAuthMiddleware CLASS');
         $ebayAccessToken = $this->getUpdateAccessToken();
         if (empty($ebayAccessToken)) {
-            Log::channel('stderr')->info('goingg to redirect /api/ebay/auth url to get token');
+            Log::channel('stderr')->info('now in EbayAuthMiddleware goingg to redirect /api/ebay/auth url to get token');
             return redirect('/api/ebay/auth'); // Redirect if no token
         }
         return $next($request);
@@ -71,53 +71,53 @@ class EbayAuthMiddleware
 
     private function getUpdateAccessToken(){
         $ebayAccessToken = '';
-        Log::channel('stderr')->info('now in getUpdateAccessToken');
-        Log::channel('stderr')->info('now going to calling readStoredToken()');
+        Log::channel('stderr')->info('now in EbayAuthMiddleware now in getUpdateAccessToken');
+        Log::channel('stderr')->info('now in EbayAuthMiddleware now going to calling readStoredToken()');
         // Check if we already have a valid token
         $storedToken = $this->readStoredToken();
         Log::channel('stderr')->info('$storedToken ::'.json_encode($storedToken));
         if ($storedToken && !$this->isTokenExpired($storedToken)) {
             $ebayAccessToken = $storedToken['access_token'];
-            Log::channel('stderr')->info(' token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+            Log::channel('stderr')->info('now in EbayAuthMiddleware token  not expired $ebayAccessToken ::'.$ebayAccessToken);
         }else if ($storedToken && isset($storedToken['refresh_token'])) {
-            Log::channel('stderr')->info('token expired. so going to call refresh token');
-            Log::channel('stderr')->info('going to call refreshUserToken()');
+            Log::channel('stderr')->info('now in EbayAuthMiddleware token expired. so going to call refresh token');
+            Log::channel('stderr')->info('now in EbayAuthMiddleware going to call refreshUserToken()');
             // Try to refresh token if exists
             $newToken = $this->refreshUserToken($storedToken['refresh_token']);
-            Log::channel('stderr')->info('$newToken ::'.json_encode($newToken));
+            Log::channel('stderr')->info('now in EbayAuthMiddleware $newToken ::'.json_encode($newToken));
             if ($newToken) {
-                Log::channel('stderr')->info(' calling storeToken()');
+                Log::channel('stderr')->info('now in EbayAuthMiddleware calling storeToken()');
                 $this->storeToken($newToken);
                 $ebayAccessToken = $newToken['access_token'];
-                Log::channel('stderr')->info('token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                Log::channel('stderr')->info('now in EbayAuthMiddleware token  not expired $ebayAccessToken ::'.$ebayAccessToken);
             }
         }
         
         
         //echo '$ebayAccessToken ::'.$ebayAccessToken;
         if (!$ebayAccessToken) {
-            Log::channel('stderr')->info('now in constructure $ebayAccessToken::'.$ebayAccessToken);
+            Log::channel('stderr')->info('now in EbayAuthMiddleware now in constructure $ebayAccessToken::'.$ebayAccessToken);
         }
 
         if($ebayAccessToken == ''){
-            Log::channel('stderr')->info('now checking token in DB');
+            Log::channel('stderr')->info('now in EbayAuthMiddleware now checking token in DB');
             $tokenData = AccessToken::find(1);
-            Log::channel('stderr')->info('$tokenData from DB ::'.json_encode($storedToken));
+            Log::channel('stderr')->info('now in EbayAuthMiddleware $tokenData from DB ::'.json_encode($storedToken));
             if($tokenData !== null && !$tokenData){
                 if(!$this->isTokenExpired1($tokenData->expires_at)){
                     $ebayAccessToken = $tokenData['access_token'];
-                    Log::channel('stderr')->info(' token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
                 }else if ($tokenData && isset($tokenData->refresh_token)) {
-                    Log::channel('stderr')->info('token expired. so going to call refresh token');
-                    Log::channel('stderr')->info('going to call refreshUserToken()');
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware token expired. so going to call refresh token');
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware going to call refreshUserToken()');
                     // Try to refresh token if exists
                     $newToken = $this->refreshUserToken($storedToken['refresh_token']);
-                    Log::channel('stderr')->info('$newToken ::'.json_encode($newToken));
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware $newToken ::'.json_encode($newToken));
                     if ($newToken) {
-                        Log::channel('stderr')->info(' calling storeToken()');
+                        Log::channel('stderr')->info('now in EbayAuthMiddleware calling storeToken()');
                         $this->storeToken($newToken);
                         $ebayAccessToken = $newToken['access_token'];
-                        Log::channel('stderr')->info('token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                        Log::channel('stderr')->info('now in EbayAuthMiddleware token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                     } 
                 }
             }
