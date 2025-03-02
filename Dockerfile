@@ -70,5 +70,5 @@ CMD php artisan config:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
     php artisan migrate --force && \
-    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90 && \
-    php -S 0.0.0.0:80 -t public
+    php -S 0.0.0.0:80 -t public && \
+    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
