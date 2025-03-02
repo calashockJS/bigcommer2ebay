@@ -371,7 +371,7 @@ class ApiController extends Controller
         Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCSkuWeb() going to call $this->ebayService->createEbayProductWithBCSkuService()');
         $returnData = $this->ebayService->createEbayProductWithBCSkuService($bcsku);
         Log::channel('stderr')->info('Now at ApiController get response data from ebayService ::'.json_encode($returnData));
-        return array('type'=>'successs','message' => $returnData['responses']);
+        return array('type'=>'successs','message' => $returnData->original->responses['response']);
     }
 
     /**
