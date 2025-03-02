@@ -74,7 +74,7 @@ class EbaySyncService
         // Your eBay sync logic here
         $this->createEbayProductWithBCSkuService($sku);
 
-        Log::info("Syncing product to eBay: " . $sku);
+        Log::channel('stderr')->info("Syncing product to eBay: " . $sku);
         return "Synced SKU: " . $sku;
     }
 

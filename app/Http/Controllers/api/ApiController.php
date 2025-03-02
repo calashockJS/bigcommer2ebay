@@ -275,7 +275,6 @@ class ApiController extends Controller
 
         foreach($bcProducts AS $k=>$product){
             SyncProductBigCommerce2Ebay::dispatch($product['sku']);
-            die('kk');
             //$this->createEbayProductWithBCSkuWeb($v['sku']);
         }
 
