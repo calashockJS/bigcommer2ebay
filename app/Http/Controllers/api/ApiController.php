@@ -42,8 +42,9 @@ class ApiController extends Controller
 
     public function __construct(EbaySyncService $ebaySyncService,Request $request)
     {
+        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure just before $this->middleware(EbayAuthMiddleware::class);');
         $this->middleware(EbayAuthMiddleware::class);
-        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure');
+        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure just after $this->middleware(EbayAuthMiddleware::class);');
         $this->ebayService = $ebaySyncService;
 
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');

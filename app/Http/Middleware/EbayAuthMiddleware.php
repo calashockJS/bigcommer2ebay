@@ -33,6 +33,7 @@ class EbayAuthMiddleware
         Log::channel('stderr')->info('now in EbayAuthMiddleware CLASS here in handle()');
         Log::channel('stderr')->info('now in EbayAuthMiddleware goingg to call getUpdateAccessToken() in EbayAuthMiddleware CLASS');
         $ebayAccessToken = $this->ebayService->getUpdateAccessTokenService();
+        Log::channel('stderr')->info('now in EbayAuthMiddleware CLASS just after $this->ebayService->getUpdateAccessTokenService()');
         if (empty($ebayAccessToken)) {
             Log::channel('stderr')->info('now in EbayAuthMiddleware goingg to redirect /api/ebay/auth url to get token');
             return redirect('/api/ebay/auth'); // Redirect if no token
