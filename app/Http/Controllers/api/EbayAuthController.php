@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Redirect;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use App\Models\AccessToken;
-
+use App\Services\EbaySyncService;
 
 class EbayAuthController extends Controller
 {
@@ -25,8 +25,11 @@ class EbayAuthController extends Controller
     private $ebayUsername;
     private $ebayPassword;
 
-    public function __construct()
+    protected $ebayService;
+
+    public function __construct(EbaySyncService $ebaySyncService)
     {
+        $this->ebayService = $ebaySyncService;
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
         $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
@@ -178,13 +181,11 @@ class EbayAuthController extends Controller
         session()->forget('ebay_oauth_state');
 
         $code = $request->get('code');
-
+        Log::channel('stderr')->info('Now at EbayAuthController get $code: ' . $code);
+        Log::channel('stderr')->info('Now at EbayAuthController  calling $this->exchangeCodeForToken($code) with $code: ' . $code);
         $tokenData = $this->exchangeCodeForToken($code);
-
+        Log::channel('stderr')->info('Now at EbayAuthController get $tokenData from $this->exchangeCodeForToken($code) as ::'.json_encode($tokenData));
         if ($tokenData) {
-            $this->storeToken($tokenData);
-            //return response()->json(['message' => 'Token stored successfully', 'token' => $tokenData]);
-            //return response()->json(['message' => 'Token stored successfully']);
             return redirect('/bigcommerce/show-bc-sku')->with(['msg' => 'Ebay token has expired, so token generation done.']);
         }
 
@@ -209,7 +210,7 @@ class EbayAuthController extends Controller
         Log::channel('stderr')->info('Now at EbayAuthController  now got $response ::'.json_encode($response->json()));
         if ($response->successful()) {
             $data = $response->json();
-
+            AccessToken::truncate();
             $returnData = [
                 'access_token'  => $data['access_token'],
                 'refresh_token' => $data['refresh_token'] ?? null,
@@ -299,58 +300,10 @@ class EbayAuthController extends Controller
      */
     private function refreshUserToken($refreshToken)
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}"),
-            'Content-Type'  => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api'.$this->ebayEnvType.'ebay.com/identity/v1/oauth2/token', [
-            'grant_type'    => 'refresh_token',
-            'refresh_token' => $refreshToken,
-            'scope'         => $this->scopes
-        ]);
-
-        if ($response->successful()) {
-            $data = $response->json();
-            $returnData = [
-                'access_token'  => $data['access_token'],
-                'refresh_token' => $data['refresh_token'] ?? null,
-                'expires_at'    => time() + $data['expires_in']
-            ];
-            AccessToken::where('id',1)->update($returnData);
-            return $returnData;
-        }
-
-        return null;
+        Log::channel('stderr')->info('Now at EbayAuthController   now at refreshUserToken() and going to call $this->ebayService->refreshUserTokenService($refreshToken) with $refreshToken::'.$refreshToken);
+        return $this->ebayService->refreshUserTokenService($refreshToken);
     }
 
-    /**
-     * Read stored token from text file.
-     */
-    private function readStoredToken()
-    {
-        if (!Storage::exists($this->tokenFile)) {
-            return null;
-        }
-
-        $tokenData = json_decode(Storage::get($this->tokenFile), true);
-
-        return $tokenData ?: null;
-    }
-
-    /**
-     * Check if the stored token is expired.
-     */
-    private function isTokenExpired($tokenData)
-    {
-        return !isset($tokenData['expires_at']) || time() >= $tokenData['expires_at'];
-    }
-
-    /**
-     * Store the access token in a text file.
-     */
-    private function storeToken($tokenData)
-    {
-        Storage::put($this->tokenFile, json_encode($tokenData));
-    }
 
     public function automatedEbayLogin()
     {

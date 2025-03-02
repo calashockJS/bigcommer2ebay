@@ -78,34 +78,8 @@ class ApiController extends Controller
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
-        Log::channel('stderr')->info('Now at ApiController now in getUpdateAccessToken');
-        if ($ebayAccessToken == '') {
-            Log::channel('stderr')->info( 'now going to calling readStoredToken()');
-            // Check if we already have a valid token
-            $storedToken = $this->readStoredToken();
-            Log::channel('stderr')->info( '$storedToken ::'.json_encode($storedToken));
-            if ($storedToken && !$this->isTokenExpired($storedToken)) {
-                $ebayAccessToken = $storedToken['access_token'];
-                Log::channel('stderr')->info('Now at ApiController  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
-            }else if ($storedToken && isset($storedToken['refresh_token'])) {
-                Log::channel('stderr')->info('Now at ApiController token expired. so going to call refresh token');
-                Log::channel('stderr')->info( 'going to call refreshUserToken()');
-                // Try to refresh token if exists
-                $newToken = $this->refreshUserToken($storedToken['refresh_token']);
-                Log::channel('stderr')->info( '$newToken ::'.json_encode($newToken));
-                if ($newToken) {
-                    Log::channel('stderr')->info('Now at ApiController  calling storeToken()');
-                    $this->storeToken($newToken);
-                    $ebayAccessToken = $newToken['access_token'];
-                    Log::channel('stderr')->info('Now at ApiController  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
-                }
-            }
-        }
-        
-        //echo '$ebayAccessToken ::'.$ebayAccessToken;
-        if (!$ebayAccessToken) {
-            Log::channel('stderr')->info( 'now in constructure $ebayAccessToken::'.$ebayAccessToken);
-        }
+        Log::channel('stderr')->info('Now at ApiController now in getUpdateAccessToken and going to call $this->ebayService->getUpdateAccessTokenService($ebayAccessToken)');
+        $ebayAccessToken = $this->ebayService->getUpdateAccessTokenService($ebayAccessToken);
         return $ebayAccessToken;
     }
 
@@ -1235,33 +1209,7 @@ class ApiController extends Controller
         return null;
     }
 
-    /**
-     * Read stored token from text file.
-     */
-    private function readStoredToken()
-    {
-        Log::channel('stderr')->info('Now at ApiController readStoredToken() going to call $this->ebayService->readStoredTokenService()');
-        return $this->ebayService->readStoredTokenService();
-    }
-
-    /**
-     * Check if the stored token is expired.
-     */
-    private function isTokenExpired($tokenData)
-    {
-        Log::channel('stderr')->info('Now at ApiController isTokenExpired() going to call $this->ebayService->isTokenExpiredService()');
-        return $this->ebayService->isTokenExpiredService($tokenData);
-    }
-
-    /**
-     * Store the access token in a text file.
-     */
-    private function storeToken($tokenData)
-    {
-        Log::channel('stderr')->info('Now at ApiController storeToken() going to call $this->ebayService->storeTokenService()');
-        return $this->ebayService->storeTokenService($tokenData);
-    }
-
+    
     public function getSKUByWebhook(Request $request)
     {
         $filePath = 'big-commerce-sku.json';

@@ -3,6 +3,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use App\Http\Middleware\EbayAuthMiddleware;
+use App\Models\AccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Artisan;
@@ -580,7 +581,7 @@ class EbaySyncService
     public function getUpdateAccessTokenService($ebayAccessToken=''){
         Log::channel('stderr')->info('now in EbaySyncService now in getUpdateAccessToken');
         if ($ebayAccessToken == '') {
-            Log::channel('stderr')->info( 'now going to calling readStoredToken()');
+            /*Log::channel('stderr')->info( 'now going to calling readStoredToken()');
             // Check if we already have a valid token
             $storedToken = $this->readStoredTokenService();
             Log::channel('stderr')->info( '$storedToken ::'.json_encode($storedToken));
@@ -599,6 +600,26 @@ class EbaySyncService
                     $ebayAccessToken = $newToken['access_token'];
                     Log::channel('stderr')->info('now in EbaySyncService  token  not expired $ebayAccessToken ::'.$ebayAccessToken);
                 }
+            }*/
+            $tokenData = AccessToken::find(1);
+            Log::channel('stderr')->info('now in EbayAuthMiddleware $tokenData from DB ::'.json_encode($storedToken));
+            if($tokenData !== null && !$tokenData){
+                if(!$this->isTokenExpired1($tokenData->expires_at)){
+                    $ebayAccessToken = $tokenData['access_token'];
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
+                }else if ($tokenData && isset($tokenData->refresh_token)) {
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware token expired. so going to call refresh token');
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware going to call refreshUserToken()');
+                    // Try to refresh token if exists
+                    $newToken = $this->refreshUserTokenService($tokenData->refresh_token);
+                    Log::channel('stderr')->info('now in EbayAuthMiddleware $newToken ::'.json_encode($newToken));
+                    if ($newToken) {
+                        Log::channel('stderr')->info('now in EbayAuthMiddleware calling storeToken()');
+                        $this->storeToken($newToken);
+                        $ebayAccessToken = $newToken['access_token'];
+                        Log::channel('stderr')->info('now in EbayAuthMiddleware token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                    } 
+                }
             }
         }
         
@@ -607,6 +628,11 @@ class EbaySyncService
             Log::channel('stderr')->info( 'now in constructure $ebayAccessToken::'.$ebayAccessToken);
         }
         return $ebayAccessToken;
+    }
+
+    private function isTokenExpired1($expires_at)
+    {
+        return !isset($expires_at) || time() >= $expires_at;
     }
 
     public function getBigCommerceProductImagesService($productId)
@@ -632,36 +658,6 @@ class EbaySyncService
     }
 
     /**
-     * Read stored token from text file.
-     */
-    public function readStoredTokenService()
-    {
-        if (!Storage::exists($this->tokenFile)) {
-            return null;
-        }
-
-        $tokenData = json_decode(Storage::get($this->tokenFile), true);
-
-        return $tokenData ?: null;
-    }
-
-    /**
-     * Check if the stored token is expired.
-     */
-    public function isTokenExpiredService($tokenData)
-    {
-        return !isset($tokenData['expires_at']) || time() >= $tokenData['expires_at'];
-    }
-
-    /**
-     * Store the access token in a text file.
-     */
-    public function storeTokenService($tokenData)
-    {
-        Storage::put($this->tokenFile, json_encode($tokenData));
-    }
-
-    /**
      * Refresh the user access token.
      */
     public function refreshUserTokenService($refreshToken)
@@ -677,11 +673,13 @@ class EbaySyncService
 
         if ($response->successful()) {
             $data = $response->json();
-            return [
+            $returnData = [
                 'access_token'  => $data['access_token'],
                 'refresh_token' => $data['refresh_token'] ?? null,
                 'expires_at'    => time() + $data['expires_in']
             ];
+            AccessToken::where('id',1)->update($returnData);
+            return $returnData;
         }
 
         return null;
