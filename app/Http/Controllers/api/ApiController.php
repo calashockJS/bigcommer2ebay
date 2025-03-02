@@ -269,10 +269,10 @@ class ApiController extends Controller
         Log::channel('stderr')->info('looping the BC product data');
         foreach($bcProducts AS $k=>$product){
             Log::channel('stderr')->info('product send for sync to job ::'.json_encode($product));
-            SyncProductBigCommerce2Ebay::dispatch($product['sku']);
-            //$this->createEbayProductWithBCSkuWeb($v['sku']);
+            //SyncProductBigCommerce2Ebay::dispatch($product['sku']);
+            $this->createEbayProductWithBCSkuWeb($product['sku']);
         }
-        
+
         Redirect()->back()->with(['type'=>'success','msg'=>'Product Sync Successfully.']);
     }
 
