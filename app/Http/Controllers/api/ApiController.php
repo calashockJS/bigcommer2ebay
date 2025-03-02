@@ -266,13 +266,14 @@ class ApiController extends Controller
         Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
         $bcProducts = $this->getProducts();
         Log::channel('stderr')->info('total product collected ::'.count($bcProducts));
+        Log::channel('stderr')->info('queuue workerr started');
         // Start the queue worker synchronously
         Artisan::call('queue:work', [
             '--queue' => 'bc2ebay-uqueue',
             '--tries' => 3,
             '--timeout' => 90
         ]);
-
+        Log::channel('stderr')->info('looping the BC product data');
         foreach($bcProducts AS $k=>$product){
             Log::channel('stderr')->info('product send for sync to job ::'.json_encode($product));
             SyncProductBigCommerce2Ebay::dispatch($product['sku']);
