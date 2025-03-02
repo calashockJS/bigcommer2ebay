@@ -602,7 +602,7 @@ class EbaySyncService
                 }
             }*/
             $tokenData = AccessToken::find(1);
-            Log::channel('stderr')->info('now in EbayAuthMiddleware $tokenData from DB ::'.json_encode($storedToken));
+            Log::channel('stderr')->info('now in EbayAuthMiddleware $tokenData from DB ::'.json_encode($tokenData));
             if($tokenData !== null && !$tokenData){
                 if(!$this->isTokenExpired1($tokenData->expires_at)){
                     $ebayAccessToken = $tokenData['access_token'];
