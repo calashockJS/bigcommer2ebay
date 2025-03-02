@@ -265,15 +265,16 @@ class ApiController extends Controller
     public function getSyncProducts(){
         Log::channel('stderr')->info('$this->accessToken ::'.$this->accessToken);
         $bcProducts = $this->getProducts();
-
+        Log::channel('stderr')->info('total product collected ::'.count($bcProducts));
         // Start the queue worker synchronously
-        /*Artisan::call('queue:work', [
+        Artisan::call('queue:work', [
             '--queue' => 'bc2ebay-uqueue',
             '--tries' => 3,
             '--timeout' => 90
-        ]);*/
+        ]);
 
         foreach($bcProducts AS $k=>$product){
+            Log::channel('stderr')->info('product send for sync to job ::'.json_encode($product));
             SyncProductBigCommerce2Ebay::dispatch($product['sku']);
             //$this->createEbayProductWithBCSkuWeb($v['sku']);
         }
