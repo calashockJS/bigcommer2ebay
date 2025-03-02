@@ -142,7 +142,9 @@ class EbaySyncService
         $length = $product['depth'];
         $length = ($length == null) ? "6.0" : $length;
         //$length = (float) $length;
-
+        $productTitle=str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT);
+        $productTitle = mb_convert_encoding($productTitle , 'UTF-8', 'UTF-8');
+        $productDescription = mb_convert_encoding(strip_tags($product['description']));
         $productData = [
             "availability" => [
                 "shipToLocationAvailability" => [
@@ -152,8 +154,8 @@ class EbaySyncService
             "condition" => "NEW",
             "sku" => $sku,
             "product" => [
-                "title" => str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT),
-                "description" => strip_tags($product['description']),
+                "title" => $productTitle,
+                "description" => $productDescription,
                 "aspects" => [
                     "Brand" => [$brandName]
                 ],
