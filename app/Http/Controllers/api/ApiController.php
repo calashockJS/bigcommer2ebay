@@ -1258,8 +1258,19 @@ class ApiController extends Controller
 
     public function removeSkuFromJSONFile($sku)
     {
+        $type = '';
+        if (str_starts_with(request()->path(), 'api/') || request()->expectsJson()) {
+            $type = 'api';
+        }else{
+            $type = 'web';
+        }
         Log::channel('stderr')->info('Now at ApiController removeSkuFromJSONFile() going to call $this->ebayService->removeSkuFromJSONFileService()');
-        return $this->ebayService->removeSkuFromJSONFileService($sku);
+        $retData=$this->ebayService->removeSkuFromJSONFileService($sku);
+        if($type=='web'){
+            return redirect()->back()->with(['type'=>'success','msg'=>'SKU removed successfully']);
+        }else{
+            return $retData;
+        }
     }
 
     public function removeSkuFromJSONFileWeb($sku)

@@ -521,7 +521,7 @@ class EbaySyncService
 
         Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
 
-        return response()->json(['message' => 'SKU removed successfully', 'data' => $jsonData]);
+        return response()->json(['message' => 'SKU removed successfully','type'=>'success']);
     }
 
     public function showSkuFromJSONFileService()
