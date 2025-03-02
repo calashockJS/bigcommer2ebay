@@ -143,8 +143,8 @@ class EbaySyncService
         $length = ($length == null) ? "6.0" : $length;
         //$length = (float) $length;
         $productTitle=str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT);
-        $productTitle = mb_convert_encoding($productTitle , 'UTF-8', 'UTF-8');
-        $productDescription = mb_convert_encoding(strip_tags($product['description']));
+        $productTitle = mb_convert_encoding($productTitle, 'UTF-8', 'UTF-8');
+        $productDescription = mb_convert_encoding(strip_tags($product['description']),'UTF-8', 'UTF-8');
         $productData = [
             "availability" => [
                 "shipToLocationAvailability" => [
