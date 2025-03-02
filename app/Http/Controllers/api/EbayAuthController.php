@@ -145,7 +145,7 @@ class EbayAuthController extends Controller
      */
     public function redirectToEbay()
     {
-        Log::channel('stderr')->info('Now at EbayAuthController  redirectToEbay()');
+        Log::channel('stderr')->info('Now at EbayAuthController  redirectToEbay() calling !!!!!!!!!!!!!!!!!!!!!!');
         $state = bin2hex(random_bytes(16)); // CSRF protection
         session(['ebay_oauth_state' => $state]);
 

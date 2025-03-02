@@ -30,51 +30,31 @@ class ApiController extends Controller
 
     private $accessToken, $ebayEnvType;
 
-    private $clientId;
-    private $clientSecret;
-    private $redirectUri;
-    private $scopes = 'https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory';
-
-    private $ebayUsername;
-    private $ebayPassword;
-
     protected $ebayService;
 
     public function __construct(EbaySyncService $ebaySyncService,Request $request)
     {
-        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure just before $this->middleware(EbayAuthMiddleware::class);');
+        Log::channel('stderr')->info('Now at ApiController class :: constructure just before $this->middleware(EbayAuthMiddleware::class);');
         $this->middleware(EbayAuthMiddleware::class);
-        Log::channel('stderr')->info('Now at ApiController now in ApiController class :: constructure just after $this->middleware(EbayAuthMiddleware::class);');
+        Log::channel('stderr')->info('Now at ApiController :: constructure just after $this->middleware(EbayAuthMiddleware::class);');
         $this->ebayService = $ebaySyncService;
-
-        $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
-        $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
-        $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
-        //$this->redirectUri = 'https://big-com-ebay-data-migrate.test/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
-
-        $this->ebayUsername = 'testuser_judhisahoo';//env('EBAY_USERNAME');
-        $this->ebayPassword = 'Jswecom*312#';//env('EBAY_PASSWORD');
 
         // Get environment type value from .env
         $envTypeEbay = env('EBAY_ENV_TYPE');
         $this->ebayEnvType = $envTypeEbay;
-
-        // Get environment type value from .env
-        $envTypeEbay = '.sandbox.';//env('EBAY_ENV_TYPE');
-        $this->ebayEnvType = $envTypeEbay;
-        
-        if ($envTypeEbay == '.sandbox.') {
-            $this->tokenFile = 'ebay_sandbox_user_token.txt';
-        }else{
-            $this->tokenFile = 'ebay_user_token.txt';
+        if($this->accessToken==''){
+            $ebayAccessToken = $this->ebayService->accessToken;
+            Log::channel('stderr')->info('now in ApiController class $ebayAccessToken ::'.$ebayAccessToken);
+            if($ebayAccessToken==''){
+                Log::channel('stderr')->info('now in ApiController now calling getUpdateAccessToken() due to $ebayAccessToken is empty');
+                Log::channel('stderr')->info('Now at ApiController now calling getUpdateAccessToken()');
+                $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
+                Log::channel('stderr')->info('Now at ApiController got $ebayAccessToken from $this->getUpdateAccessToken($ebayAccessToken) ::'.$ebayAccessToken);
+            }else{
+                $this->accessToken = $ebayAccessToken;
+                Log::channel('stderr')->info('now in ApiController in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: '.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
+            }
         }
-        
-        $ebayAccessToken = $request->accessToken;
-        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        Log::channel('stderr')->info('Now at ApiController now calling getUpdateAccessToken()');
-        $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
-        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        $this->accessToken = $ebayAccessToken;
         Log::channel('stderr')->info('Now at ApiController now at ApiController class :: end of the constructure $this->accessToken ::'.$this->accessToken);
     }
 

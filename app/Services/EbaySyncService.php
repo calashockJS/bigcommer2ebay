@@ -24,7 +24,7 @@ class EbaySyncService
         'Content-Type' => 'application/json',
     ];
 
-    private $accessToken, $ebayEnvType;
+    public $accessToken, $ebayEnvType;
 
     private $clientId;
     private $clientSecret;
@@ -59,12 +59,17 @@ class EbaySyncService
             $this->tokenFile = 'ebay_user_token.txt';
         }
         Log::channel('stderr')->info('now in EbaySyncService now in constructure');
-        $ebayAccessToken = $request->accessToken;
+        $ebayAccessToken = $this->accessToken;
         Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        Log::channel('stderr')->info('now in EbaySyncService now calling getUpdateAccessToken()');
-        $ebayAccessToken = $this->getUpdateAccessTokenService($ebayAccessToken);
-        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
-        $this->accessToken = $ebayAccessToken;
+        if($ebayAccessToken==''){
+            Log::channel('stderr')->info('now in EbaySyncService now calling getUpdateAccessToken() due to $ebayAccessToken is empty');
+            $ebayAccessToken = $this->getUpdateAccessTokenService($ebayAccessToken);
+            Log::channel('stderr')->info('now in EbaySyncService got $ebayAccessToken ::'.$ebayAccessToken.' from $this->getUpdateAccessTokenService($ebayAccessToken)');
+            $this->accessToken = $ebayAccessToken;
+        }else{
+            Log::channel('stderr')->info('now in EbaySyncService in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: '.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
+        }
+        
         Log::channel('stderr')->info('now in EbaySyncService now at end of  EbaySyncService consutructur method :: $this->accessToken ::'.$this->accessToken);
     }
 
