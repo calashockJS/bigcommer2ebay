@@ -673,9 +673,12 @@ class EbaySyncService
     }
 
     public function createEbayProductWithBCIdService($bcId){
+        Log::channel('stderr')->info('now in EbaySyncService  == createEbayProductWithBCIdService()');
+        Log::channel('stderr')->info('now in EbaySyncService  == createEbayProductWithBCIdService() with $bcId ::'.$bcId.' and going to call $this->getBigCommerceProductDetailsByIdService($bcId)');
         $product = $this->getBigCommerceProductDetailsByIdService($bcId);
         Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcId.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
-        Log::channel('stderr')->info('now in EbaySyncService die');
+        Log::channel('stderr')->info('now in EbaySyncService die before  if (empty($product)) {');
+        die;
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
         }
@@ -777,7 +780,7 @@ class EbaySyncService
 
     public function getBigCommerceProductDetailsByIdService($bcId)
     {
-        Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsBySKUService()');
+        Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsByIdService() with $bcId ::'.$bcId);
         $url = $this->baseUrl . '/catalog/products/' . $bcId;
         
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);

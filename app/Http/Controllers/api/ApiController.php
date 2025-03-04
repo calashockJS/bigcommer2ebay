@@ -1279,7 +1279,7 @@ class ApiController extends Controller
         }
 
         $bcProductId = $request->input('data.id');
-
+        Log::channel('stderr')->info('now in ApiController at getSKUByWebhook() and now getting data.id in webhook from big commerce as $bcProductId ::'.$bcProductId);
         // Check if security key is blank
         if (empty($bcProductId)) {
             return response()->json([
@@ -1287,7 +1287,7 @@ class ApiController extends Controller
                 'error' => 'Invalid header value'
             ], 401);
         }
-
+        Log::channel('stderr')->info('now in ApiController at getSKUByWebhook() and now going to call createEbayProductWithBCId() with $bcProductId ::'.$bcProductId);
         $returnData = $this->createEbayProductWithBCId($bcProductId);
 
         if (Storage::exists($filePath)) {
