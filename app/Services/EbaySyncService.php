@@ -100,6 +100,7 @@ class EbaySyncService
             ], $response->status());
         }
     }
+    
 
     public function createEbayProductWithBCSkuService($bcsku)
     {
@@ -669,5 +670,125 @@ class EbaySyncService
         }
 
         return null;
+    }
+
+    public function createEbayProductWithBCIdService($bcId){
+        $product = $this->getBigCommerceProductDetailsByIdService($bcId);
+        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcId.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
+        Log::channel('stderr')->info('now in EbaySyncService die');
+        if (empty($product)) {
+            return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
+        }
+
+        // eBay API Endpoint (Sandbox)
+        $ebayApiUrl = "https://api" . $this->ebayEnvType . "ebay.com/sell/inventory/v1/inventory_item/";
+        //echo '$ebayApiUrl ::'.$ebayApiUrl;die;
+
+        // Loop through each product and send to eBay
+        $responses = [];
+        $sku = $product['sku'];
+        $quantity = $product['inventory_level'];
+        $quantity = ($quantity > 2) ? $quantity : 2;
+        $brandId = $product['brand_id'];
+        $brandName = $this->getBigCommerceBrandNameService($brandId);
+        $mpn = ($product['mpn'] == '') ? $sku : $product['mpn'];
+        $imageArr = $this->getBigCommerceProductImagesService($product['id']);
+
+        $weight = $product['weight'];
+        $weight = ($weight == null) ? "5.000" : $weight;
+        //$weight = (float) $weight;
+
+        $width = $product['width'];
+        $width = ($width == null) ? "6.0" : $width;
+        //$width = (float) $width;
+
+        $height = $product['height'];
+        $height = ($height == null) ? "2.0" : $height;
+        //$height = (float) $height;
+
+        $length = $product['depth'];
+        $length = ($length == null) ? "6.0" : $length;
+        //$length = (float) $length;
+        $productTitle=str_pad(substr($product['name'], 0, 40), 40, ' ', STR_PAD_RIGHT);
+        $productTitle = mb_convert_encoding($productTitle, 'UTF-8', 'UTF-8');
+        $productDescription = mb_convert_encoding(strip_tags($product['description']),'UTF-8', 'UTF-8');
+        $productData = [
+            "availability" => [
+                "shipToLocationAvailability" => [
+                    "quantity" => $quantity
+                ]
+            ],
+            "condition" => "NEW",
+            "sku" => $sku,
+            "product" => [
+                "title" => $productTitle,
+                "description" => $productDescription,
+                "aspects" => [
+                    "Brand" => [$brandName]
+                ],
+                "brand" => $brandName,
+                "mpn" => $mpn,
+                "imageUrls" => $imageArr
+            ],
+            "packageWeightAndSize" => [
+                "dimensions" => [
+                    "width" => $width,
+                    "length" => $length,
+                    "height" => $height,
+                    "unit" => "INCH"
+                ],
+                "shippingIrregular" => false,
+                "packageType" => "PACKAGE_THICK_ENVELOPE", // Ensure valid package type VERY_LARGE_PACK, FREIGHT, LARGE_ENVELOPE, USPS_FLAT_RATE_ENVELOPE, USPS_LARGE_PACK
+                "weight" => [
+                    "unit" => "POUND",
+                    "value" => $weight
+                ]
+            ]
+        ];
+        // Debugging JSON payload before sending
+        $productJson = json_encode($productData, JSON_PRETTY_PRINT);
+        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: " . $productJson);
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer $this->accessToken",
+            'Content-Type' => 'application/json',
+            'Content-Language' => 'en-US'
+        ])->put($ebayApiUrl . $sku, $productData); // Convert to raw JSON   json_decode(json_encode($productData), true)
+
+        //echo '<pre>';print_r($response->json());die;
+        if ($response->successful()) {
+            Log::channel('stderr')->info("now in EbaySyncService Success Request Payload: ", [$response->json()]);
+            $responses[] = [
+                'sku' => $sku,
+                'status' => $response->status(),
+                'response' => $response->json()
+            ];
+            Log::channel('stderr')->info("now in EbaySyncService going to call createOrRePlaceOffer() with ::$sku");
+            $this->createOrRePlaceOfferService($sku);
+        } else {
+            Log::channel('stderr')->info($ebayApiUrl . $sku . ' == failed');
+            Log::channel('stderr')->info("now in EbaySyncService create inventory fail response info: ", [$response->json()]);
+        }
+        return response()->json([
+            //'message' => 'eBay inventory items created successfully',
+            'responses' => $responses
+        ]);
+    }
+
+    public function getBigCommerceProductDetailsByIdService($bcId)
+    {
+        Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsBySKUService()');
+        $url = $this->baseUrl . '/catalog/products/' . $bcId;
+        
+        $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
+        if ($response->successful()) {
+            //return response()->json($response->json()['data']);
+            return $response->json()['data']['0'];
+        } else {
+            return response()->json([
+                'error' => 'Failed to fetch products',
+                'message' => $response->body(),
+            ], $response->status());
+        }
     }
 }

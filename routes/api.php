@@ -72,4 +72,4 @@ Route::get('/ebay/cli-token-1', [EbayAuthController::class, 'fetchNewAppToken'])
 
 
 
-Route::post('/middleware-bc-webhook', [WebHookController::class, 'getSKUByWebhook']);
+Route::post('/middleware-bc-webhook', [ApiController::class, 'getSKUByWebhook']);
