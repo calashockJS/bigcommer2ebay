@@ -4,6 +4,7 @@ use App\Http\Controllers\api\ApiController;
 use App\Http\Controllers\api\EbayPolicyController;
 use App\Http\Controllers\api\EbayProductController;
 use App\Http\Controllers\api\EbayAuthController;
+use App\Http\Controllers\WebHookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 /*
@@ -42,7 +43,7 @@ Route::post('/bigcommerce/products', [ApiController::class, 'createProduct']);
 Route::get('/bigcommerce/products/{id}', [ApiController::class, 'getProductById']);
 Route::put('/bigcommerce/products/{id}', [ApiController::class, 'updateProduct']);
 Route::delete('/bigcommerce/products/{id}', [ApiController::class, 'deleteProduct']);
-Route::post('/middleware-webhook/sku', [ApiController::class, 'getSKUByWebhook']);
+
 
 Route::get('/ebay/inventory-item/{sku}', [ApiController::class, 'getInventoryItem']);
 Route::get('/ebay/create-inventory', [ApiController::class, 'createEbayProduct']);
@@ -68,3 +69,7 @@ Route::get('/ebay/token', [EbayAuthController::class, 'getUserAccessToken']); //
 Route::get('/ebay/cli-token', [EbayAuthController::class, 'automatedEbayAuth']);
 
 Route::get('/ebay/cli-token-1', [EbayAuthController::class, 'fetchNewAppToken']);
+
+
+
+Route::post('/middleware-bc-webhook', [WebHookController::class, 'getSKUByWebhook']);
