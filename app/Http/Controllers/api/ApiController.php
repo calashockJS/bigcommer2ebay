@@ -1310,7 +1310,6 @@ class ApiController extends Controller
     public function createEbayProductWithBCId($bcId)
     {
         Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCId() going to call $this->ebayService->createEbayProductWithBCIdService() $bcId ::'.$bcId);
-        return false;
         $returnData = $this->ebayService->createEbayProductWithBCIdService($bcId);
         Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCId() response from $this->ebayService->createEbayProductWithBCIdService() $returnData ::',[$returnData]);
         return $returnData;

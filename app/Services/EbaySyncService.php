@@ -782,11 +782,11 @@ class EbaySyncService
     {
         Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsByIdService() with $bcId ::'.$bcId);
         $url = $this->baseUrl . '/catalog/products/' . $bcId;
-        
+        Log::channel('stderr')->info('now in EbaySyncService  == getBigCommerceProductDetailsByIdService() with $url ::'.$url);
         $response = Http::withHeaders($this->bigCommerceHeaders)->get($url);
         if ($response->successful()) {
             //return response()->json($response->json()['data']);
-            return $response->json()['data']['0'];
+            return $response->json()['data'];
         } else {
             return response()->json([
                 'error' => 'Failed to fetch products',
