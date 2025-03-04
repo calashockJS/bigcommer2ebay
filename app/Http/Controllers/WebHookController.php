@@ -15,10 +15,14 @@ class WebHookController extends Controller
 {
     public function getSKUByWebhook(Request $request)
     {
+        Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook()');
+        $inputAll = $request->all();
+        Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: All reqeust data ',[$inputAll]);
         $filePath = 'big-commerce-sku.json';
         //$bcsku,
         // Validate WEBHOOK-SECURITY-KEY header
         if (!$request->hasHeader('WEBHOOK-SECURITY-KEY')) {
+            Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: WEBHOOK-SECURITY-KEY header is required');
             return response()->json([
                 'message' => 'WEBHOOK-SECURITY-KEY header is required',
                 'error' => 'Missing required header'
@@ -26,23 +30,27 @@ class WebHookController extends Controller
         }
 
         $securityKey = $request->header('WEBHOOK-SECURITY-KEY');
-
+        Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: WEBHOOK-SECURITY-KEY header is $securityKey::'.$securityKey);
         // Check if security key is blank
         if (empty($securityKey)) {
+            Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: WEBHOOK-SECURITY-KEY header cannot be empty::');
             return response()->json([
                 'message' => 'WEBHOOK-SECURITY-KEY cannot be empty',
                 'error' => 'Invalid header value'
             ], 401);
         }
         $securityKeyValue = env('BC_WEBHOOK_SECURITY_KEY');
+        
+        Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: BC_WEBHOOK_SECURITY_KEY from env i$securityKeyValue::'.$securityKeyValue);
         // Validate against expected security key value
         if ($securityKey !== $securityKeyValue) {
+            Log::channel('stderr')->info('now in WebHookController at getSKUByWebhook() :: value compare between header is $securityKey !== $securityKeyValue');
             return response()->json([
                 'message' => 'Invalid WEBHOOK-SECURITY-KEY provided',
                 'error' => 'Unauthorized'
             ], 401);
         }
-
+        
         // Validate bcsku header
         if (!$request->input('data.id')) {
             Log::channel('stderr')->info('now in ApiController at getSKUByWebhook() and not getting data.id in webhook from big commerce');
