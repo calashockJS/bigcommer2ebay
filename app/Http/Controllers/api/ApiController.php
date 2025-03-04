@@ -1288,7 +1288,7 @@ class ApiController extends Controller
             ], 401);
         }
 
-        $returnData = $this->createEbayProductWithBCId($bcProductId);
+        //$returnData = $this->createEbayProductWithBCId($bcProductId);
 
         if (Storage::exists($filePath)) {
             $jsonData = json_decode(Storage::get($filePath), true);
