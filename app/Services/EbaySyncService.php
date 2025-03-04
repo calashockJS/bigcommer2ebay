@@ -516,10 +516,10 @@ class EbaySyncService
         }
 
         $jsonData = array_filter($jsonData, function ($item) use ($sku) {
-            echo '<pre>'; print_r($item); echo "\n"; print_r($sku);
+            //echo '<pre>'; print_r($item); echo "\n"; print_r($sku);
             return (int) $item !== (int) $sku;
         });
-        print_r($jsonData);die;
+        //print_r($jsonData);die;
 
         Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
 
