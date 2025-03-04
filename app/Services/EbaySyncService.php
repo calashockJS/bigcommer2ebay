@@ -678,7 +678,6 @@ class EbaySyncService
         $product = $this->getBigCommerceProductDetailsByIdService($bcId);
         Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcId.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
         Log::channel('stderr')->info('now in EbaySyncService die before  if (empty($product)) {');
-        die;
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
         }
