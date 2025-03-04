@@ -1288,7 +1288,7 @@ class ApiController extends Controller
             ], 401);
         }
         Log::channel('stderr')->info('now in ApiController at getSKUByWebhook() and now going to call createEbayProductWithBCId() with $bcProductId ::'.$bcProductId);
-        //$returnData = $this->createEbayProductWithBCId($bcProductId);
+        $returnData = $this->createEbayProductWithBCId($bcProductId);
 
         if (Storage::exists($filePath)) {
             $jsonData = json_decode(Storage::get($filePath), true);
@@ -1310,6 +1310,7 @@ class ApiController extends Controller
     public function createEbayProductWithBCId($bcId)
     {
         Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCId() going to call $this->ebayService->createEbayProductWithBCIdService() $bcId ::'.$bcId);
+        return false;
         $returnData = $this->ebayService->createEbayProductWithBCIdService($bcId);
         Log::channel('stderr')->info('Now at ApiController createEbayProductWithBCId() response from $this->ebayService->createEbayProductWithBCIdService() $returnData ::',[$returnData]);
         return $returnData;
