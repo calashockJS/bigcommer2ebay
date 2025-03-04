@@ -559,7 +559,7 @@ class EbaySyncService
         }
 
         $jsonData = array_filter($jsonData, function ($item) use ($sku) {
-            return $item !== $sku;
+            return (int) $item !== (int) $sku;
         });
 
         Storage::put($filePath, json_encode(array_values($jsonData), JSON_PRETTY_PRINT));
