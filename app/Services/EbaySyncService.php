@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Storage;
 
 class EbaySyncService
 {
-    //private $baseUrl = 'https://api.bigcommerce.com/stores/u4thb/v3';
-    private $baseUrl = 'https://api.bigcommerce.com/stores/l8m8i2ai7x/v3';
+    private $baseUrl = 'https://api.bigcommerce.com/stores/u4thb/v3';
+    //private $baseUrl = 'https://api.bigcommerce.com/stores/l8m8i2ai7x/v3';
 
     private $tokenFile = '';
 
     private $bigCommerceHeaders = [
-        //'X-Auth-Token' => '8solk9a5bhgkv19z7529lelq3c6mw24',
-        'X-Auth-Token' => '6tlsgp8ihjtquecp9lyyhqd58hpadez',
+        'X-Auth-Token' => '8solk9a5bhgkv19z7529lelq3c6mw24',
+        //'X-Auth-Token' => '6tlsgp8ihjtquecp9lyyhqd58hpadez',
         'Content-Type' => 'application/json',
     ];
 
