@@ -224,8 +224,8 @@ class ApiController extends Controller
         Log::channel('stderr')->info('Now at ApiController looping the BC product data');
         foreach($bcProducts AS $k=>$product){
             Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product no '.$k.' send for sync to job ::'.json_encode($product));
-            //SyncProductBigCommerce2Ebay::dispatch($product['sku']);
-            $this->createEbayProductWithBCSkuWeb($product['sku']);
+            SyncProductBigCommerce2Ebay::dispatch($product['sku']);
+            //$this->createEbayProductWithBCSkuWeb($product['sku']);
             Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product no '.$k.'sync completed');
         }
         Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product sync completed adn commingg for rediect');
