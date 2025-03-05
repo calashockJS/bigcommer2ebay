@@ -64,11 +64,11 @@ RUN chown -R www-data:www-data /var/www/html
 # Expose port 8080
 EXPOSE 8080
 
-#CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
-CMD php artisan config:clear && \
-    php artisan cache:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan migrate --force && \
-    php -S 0.0.0.0:80 -t public && \
-    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
+CMD ["php", "-S", "0.0.0.0:80", "-t", "public"]
+#CMD php artisan config:clear && \
+#    php artisan cache:clear && \
+#    php artisan config:cache && \
+#    php artisan route:cache && \
+#    php artisan migrate --force && \
+#    php -S 0.0.0.0:80 -t public && \
+#    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
