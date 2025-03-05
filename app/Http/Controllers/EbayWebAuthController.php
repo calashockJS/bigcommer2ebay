@@ -28,7 +28,7 @@ class EbayWebAuthController extends Controller
     {
         $this->clientId = 'LuigiMoc-EcodatIm-SBX-4fce02210-06f07af6'; //env('EBAY_SANDBOX_CLIENT_ID');
         $this->clientSecret = 'SBX-debd9abe7fbe-5a31-4c41-b0a9-c494'; //env('EBAY_SANDBOX_CLIENT_SECRET');
-        $this->redirectUri = 'https://bigcommer2ebay.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
+        $this->redirectUri = 'https://bigcommer2ebay-g6h6.onrender.com/api/ebay/callback';//env('EBAY_SANDBOX_REDIRECT_URI');
 
         $this->ebayUsername = 'testuser_judhisahoo';//env('EBAY_USERNAME');
         $this->ebayPassword = 'Jswecom*312#';//env('EBAY_PASSWORD');
