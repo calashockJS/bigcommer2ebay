@@ -4,7 +4,7 @@ services:
   name: bigcommer2ebay
   runtime: docker
   repo: https://github.com/calashockJS/bigcommer2ebay
-  plan: free
+  plan: starter
   envVars:
   - key: LOG_LEVEL
     sync: false
@@ -116,13 +116,14 @@ services:
     php artisan config:cache
     php artisan route:cache
     php artisan migrate --force
+    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
   region: oregon
   dockerContext: .
   dockerfilePath: ./Dockerfile
 databases:
 - name: postgres-db
   postgresMajorVersion: "16" 
-  plan: free
+  plan: starter
   databaseName: bc2ebay
   user: bc2ebay
 version: "1"
