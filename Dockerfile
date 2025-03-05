@@ -65,11 +65,23 @@ RUN chown -R www-data:www-data /var/www/html
 EXPOSE 8080
 
 #CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
-CMD php artisan config:clear && \
-    php artisan cache:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan migrate --force && \
-    php-fpm
+#CMD php artisan config:clear && \
+#    php artisan cache:clear && \
+#    php artisan config:cache && \
+#    php artisan route:cache && \
+#    php artisan migrate --force && \
+#    php-fpm
     #php -S 0.0.0.0:80 -t public && \
     #php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
+
+RUN echo "#!/bin/bash\n\
+php artisan config:clear\n\
+php artisan cache:clear\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan migrate --force\n\
+php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90 &\n\
+php-fpm" > /startup.sh && chmod +x /startup.sh
+
+# Use the startup script as the entrypoint
+CMD ["/startup.sh"]
