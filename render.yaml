@@ -110,13 +110,6 @@ services:
     name: storage
     mountPath: /var/www/html/storage
     sizeGB: 1
-  startCommand: |
-    php artisan config:clear
-    php artisan cache:clear
-    php artisan config:cache
-    php artisan route:cache
-    php artisan migrate --force
-    php artisan queue:work --queue=bc2ebay-uqueue --tries=3 --timeout=90
   region: oregon
   dockerContext: .
   dockerfilePath: ./Dockerfile
