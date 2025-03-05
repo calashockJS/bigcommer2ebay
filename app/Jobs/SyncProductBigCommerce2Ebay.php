@@ -29,9 +29,10 @@ class SyncProductBigCommerce2Ebay implements ShouldQueue
     public function handle(EbaySyncService $ebaySyncService): void
     {
         try{
-            Log::channel('stderr')->info("Sync started for SKU: {$this->sku}");
-            Log::channel('stderr')->info('now going to call $ebaySyncService->syncProductToEbay() with '.$this->sku);
+            Log::channel('stderr')->info("Now at SyncProductBigCommerce2Ebay CLASS at handle() Sync started for SKU: {$this->sku}");
+            Log::channel('stderr')->info('Now at SyncProductBigCommerce2Ebay CLASS at handle() going to call $ebaySyncService->syncProductToEbay() with '.$this->sku);
             $ebaySyncService->syncProductToEbay($this->sku);
+            
         }catch(\Exception $e){
             Log::channel('stderr')->info("Error syncing SKU: {$this->sku} - " . $e->getMessage());
         }
