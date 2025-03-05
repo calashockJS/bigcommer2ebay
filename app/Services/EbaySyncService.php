@@ -660,11 +660,19 @@ class EbaySyncService
 
         if ($response->successful()) {
             $data = $response->json();
-            $returnData = [
-                'access_token'  => $data['access_token'],
-                'refresh_token' => $data['refresh_token'] ?? null,
-                'expires_at'    => time() + $data['expires_in']
-            ];
+            Log::channel('stderr')->info('now in EbaySyncService at refreshUserTokenService() ::$data :: '.json_encode($data));
+            if($data['refresh_token']!=''){
+                $returnData = [
+                    'access_token'  => $data['access_token'],
+                    'refresh_token' => $data['refresh_token'] ?? null,
+                    'expires_at'    => time() + $data['expires_in']
+                ];
+            }else{
+                $returnData = [
+                    'access_token'  => $data['access_token'],
+                    'expires_at'    => time() + $data['expires_in']
+                ];
+            }
             AccessToken::where('id',1)->update($returnData);
             return $returnData;
         }
