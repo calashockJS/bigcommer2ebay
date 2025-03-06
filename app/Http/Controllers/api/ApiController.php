@@ -218,7 +218,7 @@ class ApiController extends Controller
     }
 
     public function getSyncProducts(){
-        Log::channel('stderr')->info('Now at ApiController $this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('Now at ApiController $this->accessToken ::');//.$this->accessToken);
         $bcProducts = $this->getProducts();
         Log::channel('stderr')->info('Now at ApiController total product collected ::'.count($bcProducts));
         Log::channel('stderr')->info('Now at ApiController looping the BC product data');

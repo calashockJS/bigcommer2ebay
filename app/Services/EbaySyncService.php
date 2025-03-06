@@ -60,17 +60,17 @@ class EbaySyncService
         }
         Log::channel('stderr')->info('now in EbaySyncService now in constructure');
         $ebayAccessToken = $this->accessToken;
-        Log::channel('stderr')->info( '$ebayAccessToken ::'.$ebayAccessToken);
+        Log::channel('stderr')->info('now in EbaySyncService now in constructure $ebayAccessToken ::'); //.$ebayAccessToken);
         if($ebayAccessToken==''){
             Log::channel('stderr')->info('now in EbaySyncService now calling getUpdateAccessToken() due to $ebayAccessToken is empty');
             $ebayAccessToken = $this->getUpdateAccessTokenService($ebayAccessToken);
-            Log::channel('stderr')->info('now in EbaySyncService got $ebayAccessToken ::'.$ebayAccessToken.' from $this->getUpdateAccessTokenService($ebayAccessToken)');
+            Log::channel('stderr')->info('now in EbaySyncService got $ebayAccessToken :: from $this->getUpdateAccessTokenService($ebayAccessToken)');
             $this->accessToken = $ebayAccessToken;
         }else{
-            Log::channel('stderr')->info('now in EbaySyncService in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: '.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
+            Log::channel('stderr')->info('now in EbaySyncService in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: ');//.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
         }
         
-        Log::channel('stderr')->info('now in EbaySyncService now at end of  EbaySyncService consutructur method :: $this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('now in EbaySyncService now at end of  EbaySyncService consutructur method :: $this->accessToken ::'); //.$this->accessToken);
     }
 
     public function syncProductToEbay($sku)
@@ -108,7 +108,7 @@ class EbaySyncService
         Log::channel('stderr')->info('now in EbaySyncService  going to call getBigCommerceProductDetailsBySKUService()');
         // Get the product list
         $product = $this->getBigCommerceProductDetailsBySKUService($bcsku);
-        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcsku.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
+        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcsku.' to call getBigCommerceProductDetailsBySKUService() ::');//.json_encode($product));
         Log::channel('stderr')->info('now in EbaySyncService die');
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
@@ -181,7 +181,7 @@ class EbaySyncService
         ];
         // Debugging JSON payload before sending
         $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: " . $productJson);
+        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: ");// . $productJson);
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer $this->accessToken",
