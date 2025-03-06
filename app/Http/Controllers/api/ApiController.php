@@ -44,18 +44,18 @@ class ApiController extends Controller
         $this->ebayEnvType = $envTypeEbay;
         if($this->accessToken==''){
             $ebayAccessToken = $this->ebayService->accessToken;
-            Log::channel('stderr')->info('now in ApiController class $ebayAccessToken ::'.$ebayAccessToken);
+            //Log::channel('stderr')->info('now in ApiController class $ebayAccessToken ::'.$ebayAccessToken);
             if($ebayAccessToken==''){
                 Log::channel('stderr')->info('now in ApiController now calling getUpdateAccessToken() due to $ebayAccessToken is empty');
                 Log::channel('stderr')->info('Now at ApiController now calling getUpdateAccessToken()');
                 $ebayAccessToken = $this->getUpdateAccessToken($ebayAccessToken);
-                Log::channel('stderr')->info('Now at ApiController got $ebayAccessToken from $this->getUpdateAccessToken($ebayAccessToken) ::'.$ebayAccessToken);
+                //Log::channel('stderr')->info('Now at ApiController got $ebayAccessToken from $this->getUpdateAccessToken($ebayAccessToken) ::'.$ebayAccessToken);
             }else{
                 $this->accessToken = $ebayAccessToken;
-                Log::channel('stderr')->info('now in ApiController in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: '.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
+                Log::channel('stderr')->info('now in ApiController in constructure $ebayAccessToken is not empty $ebayAccessToken and $this->accessToken:: ');//'.$ebayAccessToken.'   @@@@@@ '.$this->accessToken);
             }
         }
-        Log::channel('stderr')->info('Now at ApiController now at ApiController class :: end of the constructure $this->accessToken ::'.$this->accessToken);
+        Log::channel('stderr')->info('Now at ApiController now at ApiController class :: end of the constructure $this->accessToken'); //::'.$this->accessToken);
     }
 
     private function getUpdateAccessToken($ebayAccessToken=''){
@@ -223,7 +223,7 @@ class ApiController extends Controller
         Log::channel('stderr')->info('Now at ApiController total product collected ::'.count($bcProducts));
         Log::channel('stderr')->info('Now at ApiController looping the BC product data');
         foreach($bcProducts AS $k=>$product){
-            Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product no '.$k.' send for sync to job ::'.json_encode($product));
+            Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product no '.$k.' send for sync to job ::');//.json_encode($product));
             //SyncProductBigCommerce2Ebay::dispatch($product['sku']);
             $this->createEbayProductWithBCSkuWeb($product['sku']);
             Log::channel('stderr')->info('Now at ApiController for getSyncProducts() product no '.$k.'sync completed');

@@ -590,11 +590,11 @@ class EbaySyncService
         Log::channel('stderr')->info('now in EbaySyncService now in getUpdateAccessToken');
         if ($ebayAccessToken == '') {
             $tokenData = AccessToken::find(1);
-            Log::channel('stderr')->info('now in EbaySyncService $tokenData from DB ::'.json_encode($tokenData));
+            Log::channel('stderr')->info('now in EbaySyncService $tokenData from DB ::'); //.json_encode($tokenData));
             if($tokenData){
                 if(!$this->isTokenExpired1($tokenData->expires_at)){
                     $ebayAccessToken = $tokenData->access_token;
-                    Log::channel('stderr')->info('now in EbaySyncService token not expired got from DB $ebayAccessToken ::'.$ebayAccessToken);
+                    Log::channel('stderr')->info('now in EbaySyncService token not expired got from DB $ebayAccessToken ::'); //.$ebayAccessToken);
                 }else if ($tokenData && isset($tokenData->refresh_token)) {
                     Log::channel('stderr')->info('now in EbaySyncService token expired. so going to call refresh token');
                     Log::channel('stderr')->info('now in EbaySyncService going to call refreshUserToken()');
@@ -603,7 +603,7 @@ class EbaySyncService
                     Log::channel('stderr')->info('now in EbaySyncService $newToken ::'.json_encode($newToken));
                     if ($newToken) {
                         $ebayAccessToken = $newToken['access_token'];
-                        Log::channel('stderr')->info('now in EbaySyncService token  not expired $ebayAccessToken ::'.$ebayAccessToken);
+                        Log::channel('stderr')->info('now in EbaySyncService token  not expired $ebayAccessToken ::'); //.$ebayAccessToken);
                     } 
                 }
             }else{
@@ -611,7 +611,7 @@ class EbaySyncService
             }
         }
 
-        Log::channel('stderr')->info('now in EbaySyncService at getUpdateAccessTokenService() $ebayAccessToken::'.$ebayAccessToken);
+        Log::channel('stderr')->info('now in EbaySyncService at getUpdateAccessTokenService() $ebayAccessToken::'); //.$ebayAccessToken);
         
         return $ebayAccessToken;
     }
@@ -692,7 +692,7 @@ class EbaySyncService
         Log::channel('stderr')->info('now in EbaySyncService  == createEbayProductWithBCIdService()');
         Log::channel('stderr')->info('now in EbaySyncService  == createEbayProductWithBCIdService() with $bcId ::'.$bcId.' and going to call $this->getBigCommerceProductDetailsByIdService($bcId)');
         $product = $this->getBigCommerceProductDetailsByIdService($bcId);
-        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcId.' to call getBigCommerceProductDetailsBySKUService() ::'.json_encode($product));
+        Log::channel('stderr')->info('now in EbaySyncService  get big commerce produc details with '.$bcId.' to call getBigCommerceProductDetailsBySKUService() ::'); //.json_encode($product));
         Log::channel('stderr')->info('now in EbaySyncService die before  if (empty($product)) {');
         if (empty($product)) {
             return response()->json(['error' => 'Please provide valid Big Commerce SKU.'], 404);
@@ -765,7 +765,7 @@ class EbaySyncService
         ];
         // Debugging JSON payload before sending
         $productJson = json_encode($productData, JSON_PRETTY_PRINT);
-        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: " . $productJson);
+        Log::channel('stderr')->info("now in EbaySyncService inventory craete or update Request Payload: ");// . $productJson);
 
         $response = Http::withHeaders([
             'Authorization' => "Bearer $this->accessToken",
